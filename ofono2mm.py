@@ -415,7 +415,7 @@ class MMSimInterface(ServiceInterface):
 
 async def main():
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
-    with open('ofono.xml', 'r') as f:
+    with open('/usr/lib/ofono2mm/ofono.xml', 'r') as f:
         ofono_introspection = f.read()
     ofono_proxy = bus.get_proxy_object('org.ofono', '/ril_0', ofono_introspection)
     ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
