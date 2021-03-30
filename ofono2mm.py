@@ -9,16 +9,47 @@ from dbus_next import Variant, DBusError, BusType
 import asyncio
 
 class MMInterface(ServiceInterface):
-    def __init__(self):
+    def __init__(self, bus, ofono_manager_interface):
         super().__init__('org.freedesktop.ModemManager1')
+        self.bus = bus
+        self.ofono_manager_interface = ofono_manager_interface
+        self.mm_modem_interfaces = []
+        self.mm_modem_objects = []
 
     @dbus_property(access=PropertyAccess.READ)
     def Version(self) -> 's':
         return '1.14.10'
 
     @method()
-    def ScanDevices(self):
-        pass
+    async def ScanDevices(self):
+        await self.find_ofono_modems()
+
+    async def find_ofono_modems(self):
+        for mm_object in self.mm_modem_objects:
+            self.bus.unexport(mm_object)
+
+        self.ofono_modem_list = await self.ofono_manager_interface.call_get_modems()
+
+        with open('/usr/lib/ofono2mm/ofono_modem.xml', 'r') as f:
+            ofono_modem_introspection = f.read()
+
+        i = 1
+
+        for modem in self.ofono_modem_list:
+            ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0], ofono_modem_introspection)
+            ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
+            ofono_modem_props = await ofono_modem_interface.call_get_properties()
+            mm_modem_interface = MMModemInterface(i, self.bus, ofono_proxy, ofono_modem_interface, ofono_modem_props)
+            ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
+            await mm_modem_interface.init_ofono_interfaces()
+            await mm_modem_interface.init_mm_interfaces()
+            mm_modem_interface.set_states()
+            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
+            self.bus.export('/org/freedesktop/ModemManager/Modems/' + str(i), mm_modem_interface)
+            self.mm_modem_interfaces.append(mm_modem_interface)
+            self.mm_modem_objects.append('/org/freedesktop/ModemManager/Modems/' + str(i))
+            self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
+            i += 1
 
     @method()
     def SetLogging(self, level: 's'):
@@ -33,19 +64,18 @@ class MMInterface(ServiceInterface):
         pass
 
 class MMModemInterface(ServiceInterface):
-    def __init__(self, ofono_modem, ofono_props, ofono_sim, ofono_sim_props, ofono_netr, ofono_netr_props, ofono_radio, ofono_radio_props):
+    def __init__(self, index, bus, ofono_proxy, ofono_modem, ofono_props):
         super().__init__('org.freedesktop.ModemManager1.Modem')
+        self.index = index
+        self.bus = bus
+        self.ofono_proxy = ofono_proxy
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
-        self.ofono_sim = ofono_sim
-        self.ofono_sim_props = ofono_sim_props
-        self.ofono_netr = ofono_netr
-        self.ofono_netr_props = ofono_netr_props
-        self.ofono_radio = ofono_radio
-        self.ofono_radio_props = ofono_radio_props
+        self.ofono_interfaces = {}
+        self.ofono_interface_props = {}
         self.props = {
-                    'Sim': Variant('o', '/org/freedesktop/ModemManager1/SIMs/1'),
-                    'SimSlots': Variant('ao', ['/org/freedesktop/ModemManager1/SIMs/1']),
+                    'Sim': Variant('o', '/org/freedesktop/ModemManager1/SIMs/' + str(self.index)),
+                    'SimSlots': Variant('ao', ['/org/freedesktop/ModemManager1/SIMs/' + str(self.index)]),
                     'PrimarySimSlot': Variant('u', 0),
                     'Bearers': Variant('ao', []),
                     'SupportedCapabilities': Variant('au', [0, 4]),
@@ -79,20 +109,55 @@ class MMModemInterface(ServiceInterface):
                     'CurrentBands': Variant('au', []),
                     'SupportedIpFamilies': Variant('u', 0)
                 }
-        self.set_states()
+
+    async def init_ofono_interfaces(self):
+        for iface in self.ofono_props['Interfaces'].value:
+            self.ofono_interfaces.update({
+                iface: self.ofono_proxy.get_interface(iface)
+            })
+            try:
+                self.ofono_interface_props.update({
+                    iface: await self.ofono_interfaces[iface].call_get_properties()
+                })
+                self.ofono_interfaces[iface].on_property_changed(self.ofono_interface_changed(iface))
+            except AttributeError:
+                self.ofono_interface_props.update({
+                    iface: {}
+                })
+
+    async def init_mm_interfaces(self):
+        self.mm_modem3gpp_interface = MMModem3gppInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        self.ofono_modem.on_property_changed(self.mm_modem3gpp_interface.ofono_changed)
+        for iface in self.ofono_interfaces:
+            try:
+                self.ofono_interfaces[iface].on_property_changed(self.mm_modem3gpp_interface.ofono_interface_changed(iface))
+            except AttributeError:
+                pass
+        self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(self.index), self.mm_modem3gpp_interface)
+        self.bus.export('/org/freedesktop/ModemManager/Modems/' + str(self.index), self.mm_modem3gpp_interface)
+
+        self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        self.ofono_modem.on_property_changed(self.mm_sim_interface.ofono_changed)
+        for iface in self.ofono_interfaces:
+            try:
+                self.ofono_interfaces[iface].on_property_changed(self.mm_sim_interface.ofono_interface_changed(iface))
+            except AttributeError:
+                pass
+        self.bus.export('/org/freedesktop/ModemManager1/SIMs/' + str(self.index), self.mm_sim_interface)
+        self.bus.export('/org/freedesktop/ModemManager/SIMs/' + str(self.index), self.mm_sim_interface)
 
     def set_states(self):
         old_state = self.props['State'].value
         if self.ofono_props['Powered'].value:
-            if self.ofono_sim_props['Present'].value:
-                if self.ofono_sim_props['PinRequired'].value == 'none':
+            if self.ofono_interface_props['org.ofono.SimManager']['Present'].value:
+                if self.ofono_interface_props['org.ofono.SimManager']['PinRequired'].value == 'none':
                     self.props['UnlockRequired'] = Variant('u', 1)
-                    if self.ofono_props['Online'].value and ("Status" in self.ofono_netr_props):
-                        if self.ofono_netr_props['Status'].value == 'registered' or self.ofono_netr_props['Status'].value == 'roaming':
+                    if self.ofono_props['Online'].value and ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
+                        if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
                             self.props['State'] = Variant('i', 8)
-                            if 'Strength' in self.ofono_netr_props:
-                                self.props['SignalQuality'] = Variant('(ub)', [self.ofono_netr_props['Strength'].value, True])
-                        elif selfofono_netr_props['Status'].value == 'searching':
+                            if 'Strength' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
+                                self.props['SignalQuality'] = Variant('(ub)', [self.ofono_interface_props['org.ofono.NetworkRegistration']['Strength'].value, True])
+                        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'searching':
                             self.props['State'] = Variant('i', 7)
                         else:
                             self.props['State'] = Variant('i', 6)
@@ -106,13 +171,13 @@ class MMModemInterface(ServiceInterface):
         else:
             self.props['State'] = Variant('i', 3)
 
-        if "Technology" in self.ofono_netr_props:
+        if "Technology" in self.ofono_interface_props['org.ofono.NetworkRegistration']:
             current_tech = 0
-            if self.ofono_netr_props["Technology"].value == "lte":
+            if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
                 current_tech |= 1 << 14
-            elif self.ofono_netr_props["Technology"].value == "umts":
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts":
                 current_tech |= 1 << 5
-            elif self.ofono_netr_props["Technology"].value == "gsm":
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm":
                 current_tech |= 1 << 1
             self.props['AccessTechnologies'] = Variant('u', current_tech)
         else:
@@ -310,29 +375,22 @@ class MMModemInterface(ServiceInterface):
         self.ofono_props[name] = varval
         self.set_states()
 
-    def ofono_sim_changed(self, name, varval):
-        self.ofono_sim_props[name] = varval
-        self.set_states()
-
-    def ofono_netr_changed(self, name, varval):
-        self.ofono_netr_props[name] = varval
-        self.set_states()
-
-    def ofono_radio_changed(self, name, varval):
-        self.ofono_radio_props[name] = varval
-        self.set_states()
+    def ofono_interface_changed(self, iface):
+        def ch(name, varval):
+            self.ofono_interface_props[iface][name] = varval
+            self.set_states()
+        return ch
 
 class MMModem3gppInterface(ServiceInterface):
-    def __init__(self, ofono_modem, ofono_props, ofono_sim, ofono_sim_props, ofono_netr, ofono_netr_props, ofono_radio, ofono_radio_props):
+    def __init__(self, index, bus, ofono_proxy, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Modem.Modem3gpp')
+        self.index = index
+        self.bus = bus
+        self.ofono_proxy = ofono_proxy
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
-        self.ofono_sim = ofono_sim
-        self.ofono_sim_props = ofono_sim_props
-        self.ofono_netr = ofono_netr
-        self.ofono_netr_props = ofono_netr_props
-        self.ofono_radio = ofono_radio
-        self.ofono_radio_props = ofono_radio_props
+        self.ofono_interfaces = ofono_interfaces
+        self.ofono_interface_props = ofono_interface_props
         self.props = {
             'Imei': Variant('s', ofono_props['Serial'].value),
             'RegistrationState': Variant('u', 0),
@@ -348,19 +406,19 @@ class MMModem3gppInterface(ServiceInterface):
         self.UpdateRegistration()
 
     def UpdateRegistration(self):
-        self.props['OperatorName'] = Variant('s', self.ofono_netr_props['Name'].value if "Name" in self.ofono_netr_props else '')
-        self.props['OperatorCode'] = Variant('s', self.ofono_netr_props['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_netr_props else '')
-        if self.ofono_netr_props['Status'].value == "unregisered":
+        self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+        self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+        if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unregisered":
             self.props['RegistrationState'] = Variant('u', 0)
-        elif self.ofono_netr_props['Status'].value == "registered":
+        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "registered":
             self.props['RegistrationState'] = Variant('u', 1)
-        elif self.ofono_netr_props['Status'].value == "searching":
+        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "searching":
             self.props['RegistrationState'] = Variant('u', 2)
-        elif self.ofono_netr_props['Status'].value == "denied":
+        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "denied":
             self.props['RegistrationState'] = Variant('u', 3)
-        elif self.ofono_netr_props['Status'].value == "unknown":
+        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unknown":
             self.props['RegistrationState'] = Variant('u', 4)
-        elif self.ofono_netr_props['Status'].value == "roaming":
+        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "roaming":
             self.props['RegistrationState'] = Variant('u', 5)
         self.emit_properties_changed({'RegistrationState': self.props['RegistrationState'].value})
         self.emit_properties_changed({'OperatorName': self.props['OperatorName'].value})
@@ -410,33 +468,26 @@ class MMModem3gppInterface(ServiceInterface):
         self.ofono_props[name] = varval
         self.UpdateRegistration()
 
-    def ofono_sim_changed(self, name, varval):
-        self.ofono_sim_props[name] = varval
-        self.UpdateRegistration()
-
-    def ofono_netr_changed(self, name, varval):
-        self.ofono_netr_props[name] = varval
-        self.UpdateRegistration()
-
-    def ofono_radio_changed(self, name, varval):
-        self.ofono_radio_props[name] = varval
-        self.UpdateRegistration()
+    def ofono_interface_changed(self, iface):
+        def ch(name, varval):
+            self.ofono_interface_props[iface][name] = varval
+            self.UpdateRegistration()
+        return ch
 
 class MMSimInterface(ServiceInterface):
-    def __init__(self, ofono_modem, ofono_props, ofono_sim, ofono_sim_props, ofono_netr, ofono_netr_props, ofono_radio, ofono_radio_props):
+    def __init__(self, index, bus, ofono_proxy, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Sim')
+        self.index = index
+        self.bus = bus
+        self.ofono_proxy = ofono_proxy
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
-        self.ofono_sim = ofono_sim
-        self.ofono_sim_props = ofono_sim_props
-        self.ofono_netr = ofono_netr
-        self.ofono_netr_props = ofono_netr_props
-        self.ofono_radio = ofono_radio
-        self.ofono_radio_props = ofono_radio_props
+        self.ofono_interfaces = ofono_interfaces
+        self.ofono_interface_props = ofono_interface_props
         self.props = {
                 'Active': Variant('b', False),
                 'SimIdentifier': Variant('s', ''),
-                'IMSI': Variant('s', ''),
+                'IMSI': Variant('s', '0'),
                 'Eid': Variant('s', ''),
                 'OperatorIdentifier': Variant('s', ''),
                 'OperatorName': Variant('s', ''),
@@ -474,65 +525,23 @@ class MMSimInterface(ServiceInterface):
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
 
-    def ofono_sim_changed(self, name, varval):
-        self.ofono_sim_props[name] = varval
-
-    def ofono_netr_changed(self, name, varval):
-        self.ofono_netr_props[name] = varval
-
-    def ofono_radio_changed(self, name, varval):
-        self.ofono_radio_props[name] = varval
+    def ofono_interface_changed(self, iface):
+        def ch(name, varval):
+            self.ofono_interface_props[iface][name] = varval
+        return ch
 
 async def main():
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
-    with open('/usr/lib/ofono2mm/ofono_modem.xml', 'r') as f:
+    with open('/usr/lib/ofono2mm/ofono.xml', 'r') as f:
         ofono_introspection = f.read()
-    ofono_proxy = bus.get_proxy_object('org.ofono', '/ril_0', ofono_introspection)
+    ofono_proxy = bus.get_proxy_object('org.ofono', '/', ofono_introspection)
 
-    ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
-    ofono_sim_interface = ofono_proxy.get_interface('org.ofono.SimManager')
-    ofono_netr_interface = ofono_proxy.get_interface('org.ofono.NetworkRegistration')
-    ofono_radio_interface = ofono_proxy.get_interface('org.ofono.RadioSettings')
-    ofono_props = await ofono_modem_interface.call_get_properties()
-    ofono_sim_props = await ofono_sim_interface.call_get_properties()
-    try:
-        ofono_netr_props = await ofono_netr_interface.call_get_properties()
-    except(DBusError):
-        ofono_netr_props = {}
-    try:
-        ofono_radio_props = await ofono_radio_interface.call_get_properties()
-    except(DBusError):
-        ofono_radio_propr = {}
+    ofono_manager_interface = ofono_proxy.get_interface('org.ofono.Manager')
 
-    mm_interface = MMInterface()
-    mm_modem_interface_1 = MMModemInterface(ofono_modem_interface, ofono_props, ofono_sim_interface, ofono_sim_props, ofono_netr_interface, ofono_netr_props, ofono_radio_interface, ofono_radio_props)
-    mm_modem3gpp_interface_1 = MMModem3gppInterface(ofono_modem_interface, ofono_props, ofono_sim_interface, ofono_sim_props, ofono_netr_interface, ofono_netr_props, ofono_radio_interface, ofono_radio_props)
-    mm_sim_interface_1 = MMSimInterface(ofono_modem_interface, ofono_props, ofono_sim_interface, ofono_sim_props, ofono_netr_interface, ofono_netr_props, ofono_radio_interface, ofono_radio_props)
+    mm_manager_interface = MMInterface(bus, ofono_manager_interface)
+    await mm_manager_interface.find_ofono_modems()
 
-    ofono_modem_interface.on_property_changed(mm_modem_interface_1.ofono_changed)
-    ofono_sim_interface.on_property_changed(mm_modem_interface_1.ofono_sim_changed)
-    ofono_netr_interface.on_property_changed(mm_modem_interface_1.ofono_netr_changed)
-    ofono_radio_interface.on_property_changed(mm_modem_interface_1.ofono_radio_changed)
-
-    ofono_modem_interface.on_property_changed(mm_modem3gpp_interface_1.ofono_changed)
-    ofono_sim_interface.on_property_changed(mm_modem3gpp_interface_1.ofono_sim_changed)
-    ofono_netr_interface.on_property_changed(mm_modem3gpp_interface_1.ofono_netr_changed)
-    ofono_radio_interface.on_property_changed(mm_modem3gpp_interface_1.ofono_radio_changed)
-
-    ofono_modem_interface.on_property_changed(mm_sim_interface_1.ofono_changed)
-    ofono_sim_interface.on_property_changed(mm_sim_interface_1.ofono_sim_changed)
-    ofono_netr_interface.on_property_changed(mm_sim_interface_1.ofono_netr_changed)
-    ofono_radio_interface.on_property_changed(mm_sim_interface_1.ofono_radio_changed)
-
-    bus.export('/org/freedesktop/ModemManager1', mm_interface)
-
-    bus.export('/org/freedesktop/ModemManager1/Modems/1', mm_modem_interface_1)
-    bus.export('/org/freedesktop/ModemManager1/Modems/1', mm_modem3gpp_interface_1)
-    bus.export('/org/freedesktop/ModemManager1/SIMs/1', mm_sim_interface_1)
-
-    bus.export('/org/freedesktop/ModemManager/Modems/1', mm_modem_interface_1)
-    bus.export('/org/freedesktop/ModemManager/Modems/1', mm_modem3gpp_interface_1)
-    bus.export('/org/freedesktop/ModemManager/SIMs/1', mm_sim_interface_1)
+    bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
 
     await bus.request_name('org.freedesktop.ModemManager1')
     await bus.wait_for_disconnect()

@@ -148,3 +148,4 @@
 <arg name="message" type="s"/>
 </signal>
 </interface>
+</node>
