@@ -167,6 +167,7 @@ class MMModemInterface(ServiceInterface):
                     self.props['UnlockRequired'] = Variant('u', 2)
                     self.props['State'] = Variant('i', 2)
             else:
+                self.props['State'] = Variant('i', -1)
                 self.props['StateFailedReason'] = Variant('i', 2)
         else:
             self.props['State'] = Variant('i', 3)
