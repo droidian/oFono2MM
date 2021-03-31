@@ -13,5 +13,6 @@ Package: ofono2mm
 Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
-	 python3-dbus-next
+	 python3-dbus-next,
+	 modemmanager,
 Description: A simple python script implementing ModemManager DBus API and using ofono to manage the modem
