@@ -95,17 +95,20 @@ class MMModemInterface(ServiceInterface):
 
     def set_states(self):
         old_state = self.props['State'].value
-        if self.ofono_props['Powered'].value:
+        if self.ofono_props['Powered'].value and 'org.ofono.SimManager' in self.ofono_interface_props:
             if self.ofono_interface_props['org.ofono.SimManager']['Present'].value:
                 if self.ofono_interface_props['org.ofono.SimManager']['PinRequired'].value == 'none':
                     self.props['UnlockRequired'] = Variant('u', 1)
-                    if self.ofono_props['Online'].value and ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
-                        if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
-                            self.props['State'] = Variant('i', 8)
-                            if 'Strength' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
-                                self.props['SignalQuality'] = Variant('(ub)', [self.ofono_interface_props['org.ofono.NetworkRegistration']['Strength'].value, True])
-                        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'searching':
-                            self.props['State'] = Variant('i', 7)
+                    if self.ofono_props['Online'].value and 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
+                        if ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
+                            if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
+                                self.props['State'] = Variant('i', 8)
+                                if 'Strength' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
+                                    self.props['SignalQuality'] = Variant('(ub)', [self.ofono_interface_props['org.ofono.NetworkRegistration']['Strength'].value, True])
+                            elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'searching':
+                                self.props['State'] = Variant('i', 7)
+                            else:
+                                self.props['State'] = Variant('i', 6)
                         else:
                             self.props['State'] = Variant('i', 6)
                     else:
@@ -119,17 +122,18 @@ class MMModemInterface(ServiceInterface):
         else:
             self.props['State'] = Variant('i', 3)
 
-        if "Technology" in self.ofono_interface_props['org.ofono.NetworkRegistration']:
-            current_tech = 0
-            if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
-                current_tech |= 1 << 14
-            elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts":
-                current_tech |= 1 << 5
-            elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm":
-                current_tech |= 1 << 1
-            self.props['AccessTechnologies'] = Variant('u', current_tech)
-        else:
-            self.props['AccessTechnologies'] = Variant('u', 0)
+        if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
+            if "Technology" in self.ofono_interface_props['org.ofono.NetworkRegistration']:
+                current_tech = 0
+                if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
+                    current_tech |= 1 << 14
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts":
+                    current_tech |= 1 << 5
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm":
+                    current_tech |= 1 << 1
+                self.props['AccessTechnologies'] = Variant('u', current_tech)
+            else:
+                self.props['AccessTechnologies'] = Variant('u', 0)
 
         self.emit_properties_changed({'AccessTechnologies': self.props['AccessTechnologies'].value})
         self.emit_properties_changed({'State': self.props['State'].value})
@@ -319,8 +323,10 @@ class MMModemInterface(ServiceInterface):
     def SupportedIpFamilies(self) -> 'u':
         return self.props['SupportedIpFamilies'].value
 
-    def ofono_changed(self, name, varval):
+    async def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
+        if name == "Interfaces":
+            await self.init_ofono_interfaces()
         self.set_states()
 
     def ofono_interface_changed(self, iface):

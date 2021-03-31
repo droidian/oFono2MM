@@ -32,20 +32,21 @@ class MMModem3gppInterface(ServiceInterface):
         self.UpdateRegistration()
 
     def UpdateRegistration(self):
-        self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
-        self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
-        if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unregisered":
-            self.props['RegistrationState'] = Variant('u', 0)
-        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "registered":
-            self.props['RegistrationState'] = Variant('u', 1)
-        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "searching":
-            self.props['RegistrationState'] = Variant('u', 2)
-        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "denied":
-            self.props['RegistrationState'] = Variant('u', 3)
-        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unknown":
-            self.props['RegistrationState'] = Variant('u', 4)
-        elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "roaming":
-            self.props['RegistrationState'] = Variant('u', 5)
+        if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
+            self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+            self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+            if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unregisered":
+                self.props['RegistrationState'] = Variant('u', 0)
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "registered":
+                self.props['RegistrationState'] = Variant('u', 1)
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "searching":
+                self.props['RegistrationState'] = Variant('u', 2)
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "denied":
+                self.props['RegistrationState'] = Variant('u', 3)
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unknown":
+                self.props['RegistrationState'] = Variant('u', 4)
+            elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "roaming":
+                self.props['RegistrationState'] = Variant('u', 5)
         self.emit_properties_changed({'RegistrationState': self.props['RegistrationState'].value})
         self.emit_properties_changed({'OperatorName': self.props['OperatorName'].value})
         self.emit_properties_changed({'OperatorCode': self.props['OperatorCode'].value})
