@@ -18,7 +18,7 @@ class MMModem3gppInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-            'Imei': Variant('s', ofono_props['Serial'].value),
+            'Imei': Variant('s', ofono_props['Serial'].value if 'Serial' in ofono_props else ''),
             'RegistrationState': Variant('u', 0),
             'OperatorCode': Variant('s', ''),
             'OperatorName': Variant('s', ''),

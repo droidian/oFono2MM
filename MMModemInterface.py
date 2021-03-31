@@ -42,7 +42,7 @@ class MMModemInterface(ServiceInterface):
                     'Plugin': Variant('s', 'ofono2mm'),
                     'PrimaryPort': Variant('s', 'ttyMSM0'),
                     'Ports': Variant('a(su)', []),
-                    'EquipmentIdentifier': Variant('s', ofono_props['Serial'].value),
+                    'EquipmentIdentifier': Variant('s', ofono_props['Serial'].value if 'Serial' in ofono_props else ''),
                     'UnlockRequired': Variant('u', 0), 
                     'UnlockRetries': Variant('a{uu}', {}),
                     'State': Variant('i', -1),
@@ -170,7 +170,7 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     async def SetPowerState(self, state: 'u'):
-        await self.ofono_modem.call_set_property('Powered', Variant('b', state == 3))
+        await self.ofono_modem.call_set_property('Powered', Variant('b', state > 1))
 
     @method()
     def SetCurrentCapabilities(self, capabilities: 'u'):
