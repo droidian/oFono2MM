@@ -40,7 +40,7 @@ class MMModemInterface(ServiceInterface):
                     'Device': Variant('s', ''),
                     'Drivers': Variant('as', []),
                     'Plugin': Variant('s', 'ofono2mm'),
-                    'PrimaryPort': Variant('s', ''),
+                    'PrimaryPort': Variant('s', 'ttyMSM0'),
                     'Ports': Variant('a(su)', []),
                     'EquipmentIdentifier': Variant('s', ofono_props['Serial'].value),
                     'UnlockRequired': Variant('u', 0), 
