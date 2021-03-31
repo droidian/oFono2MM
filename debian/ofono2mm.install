@@ -1,5 +1,4 @@
 *.py /usr/lib/ofono2mm
 ofono.xml /usr/lib/ofono2mm
 ofono_modem.xml /usr/lib/ofono2mm
-systemd/* /usr/lib/systemd/system
-
+systemd/10-ofono2mm.conf /lib/systemd/system/ModemManager.service.d/
