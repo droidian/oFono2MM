@@ -46,12 +46,12 @@ class MMInterface(ServiceInterface):
             ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
             ofono_modem_props = await ofono_modem_interface.call_get_properties()
             mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy, ofono_modem_interface, ofono_modem_props)
+            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
+            self.bus.export('/org/freedesktop/ModemManager/Modems/' + str(i), mm_modem_interface)
             ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
             await mm_modem_interface.init_ofono_interfaces()
             await mm_modem_interface.init_mm_interfaces()
             mm_modem_interface.set_states()
-            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
-            self.bus.export('/org/freedesktop/ModemManager/Modems/' + str(i), mm_modem_interface)
             self.mm_modem_interfaces.append(mm_modem_interface)
             self.mm_modem_objects.append('/org/freedesktop/ModemManager/Modems/' + str(i))
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
@@ -84,11 +84,10 @@ async def main(loop):
     ofono_manager_interface = ofono_proxy.get_interface('org.ofono.Manager')
 
     mm_manager_interface = MMInterface(loop, bus, ofono_manager_interface)
+    bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
     await mm_manager_interface.find_ofono_modems()
     ofono_manager_interface.on_modem_added(mm_manager_interface.ofono_modem_added)
     ofono_manager_interface.on_modem_removed(mm_manager_interface.ofono_modem_removed)
-
-    bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
 
     await bus.request_name('org.freedesktop.ModemManager1')
     await bus.wait_for_disconnect()
