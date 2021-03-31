@@ -30,6 +30,9 @@ class MMInterface(ServiceInterface):
         for mm_object in self.mm_modem_objects:
             self.bus.unexport(mm_object)
 
+        self.mm_modem_objects = []
+        self.mm_modem_intefaces = []
+
         self.ofono_modem_list = await self.ofono_manager_interface.call_get_modems()
 
         with open('/usr/lib/ofono2mm/ofono_modem.xml', 'r') as f:
@@ -53,6 +56,12 @@ class MMInterface(ServiceInterface):
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
             i += 1
 
+    async def ofono_modem_added(self, path, mprops):
+       await self.find_ofono_modems() 
+
+    async def ofono_modem_removed(self, path):
+       await self.find_ofono_modems() 
+
     @method()
     def SetLogging(self, level: 's'):
         pass
@@ -75,6 +84,8 @@ async def main():
 
     mm_manager_interface = MMInterface(bus, ofono_manager_interface)
     await mm_manager_interface.find_ofono_modems()
+    ofono_manager_interface.on_modem_added(mm_manager_interface.ofono_modem_added)
+    ofono_manager_interface.on_modem_removed(mm_manager_interface.ofono_modem_removed)
 
     bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
 
