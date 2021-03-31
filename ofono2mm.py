@@ -57,11 +57,11 @@ class MMInterface(ServiceInterface):
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
             i += 1
 
-    async def ofono_modem_added(self, path, mprops):
-       await self.find_ofono_modems() 
+    def ofono_modem_added(self, path, mprops):
+       self.loop.create_task(self.find_ofono_modems())
 
-    async def ofono_modem_removed(self, path):
-       await self.find_ofono_modems() 
+    def ofono_modem_removed(self, path):
+       self.loop.create_task(self.find_ofono_modems())
 
     @method()
     def SetLogging(self, level: 's'):
