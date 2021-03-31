@@ -11,8 +11,9 @@ import asyncio
 from MMModemInterface import *
 
 class MMInterface(ServiceInterface):
-    def __init__(self, bus, ofono_manager_interface):
+    def __init__(self, loop, bus, ofono_manager_interface):
         super().__init__('org.freedesktop.ModemManager1')
+        self.loop = loop
         self.bus = bus
         self.ofono_manager_interface = ofono_manager_interface
         self.mm_modem_interfaces = []
@@ -44,7 +45,7 @@ class MMInterface(ServiceInterface):
             ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0], ofono_modem_introspection)
             ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
             ofono_modem_props = await ofono_modem_interface.call_get_properties()
-            mm_modem_interface = MMModemInterface(i, self.bus, ofono_proxy, ofono_modem_interface, ofono_modem_props)
+            mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy, ofono_modem_interface, ofono_modem_props)
             ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
             await mm_modem_interface.init_ofono_interfaces()
             await mm_modem_interface.init_mm_interfaces()
@@ -74,7 +75,7 @@ class MMInterface(ServiceInterface):
     def InhibitDevice(self, uid: 's', inhibit: 'b'):
         pass
 
-async def main():
+async def main(loop):
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
     with open('/usr/lib/ofono2mm/ofono.xml', 'r') as f:
         ofono_introspection = f.read()
@@ -82,7 +83,7 @@ async def main():
 
     ofono_manager_interface = ofono_proxy.get_interface('org.ofono.Manager')
 
-    mm_manager_interface = MMInterface(bus, ofono_manager_interface)
+    mm_manager_interface = MMInterface(loop, bus, ofono_manager_interface)
     await mm_manager_interface.find_ofono_modems()
     ofono_manager_interface.on_modem_added(mm_manager_interface.ofono_modem_added)
     ofono_manager_interface.on_modem_removed(mm_manager_interface.ofono_modem_removed)
@@ -92,4 +93,5 @@ async def main():
     await bus.request_name('org.freedesktop.ModemManager1')
     await bus.wait_for_disconnect()
 
-asyncio.get_event_loop().run_until_complete(main())
+loop = asyncio.get_event_loop()
+loop.run_until_complete(main(loop))

@@ -11,8 +11,9 @@ from MMModem3gppInterface import *
 from MMSimInterface import *
 
 class MMModemInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, ofono_modem, ofono_props):
+    def __init__(self, loop, index, bus, ofono_proxy, ofono_modem, ofono_props):
         super().__init__('org.freedesktop.ModemManager1.Modem')
+        self.loop = loop
         self.index = index
         self.bus = bus
         self.ofono_proxy = ofono_proxy
@@ -323,10 +324,10 @@ class MMModemInterface(ServiceInterface):
     def SupportedIpFamilies(self) -> 'u':
         return self.props['SupportedIpFamilies'].value
 
-    async def ofono_changed(self, name, varval):
+    def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
         if name == "Interfaces":
-            await self.init_ofono_interfaces()
+            self.loop.create_task(self.init_ofono_interfaces())
         self.set_states()
 
     def ofono_interface_changed(self, iface):
