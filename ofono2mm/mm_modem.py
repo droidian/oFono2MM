@@ -7,8 +7,8 @@ from dbus_next import Variant, DBusError, BusType
 
 import asyncio
 
-from MMModem3gppInterface import *
-from MMSimInterface import *
+from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
+from ofono2mm.mm_sim import MMSimInterface
 
 class MMModemInterface(ServiceInterface):
     def __init__(self, loop, index, bus, ofono_proxy, ofono_modem, ofono_props):

@@ -8,7 +8,7 @@ from dbus_next import Variant, DBusError, BusType
 
 import asyncio
 
-from MMModemInterface import *
+from ofono2mm import MMModemInterface
 
 class MMInterface(ServiceInterface):
     def __init__(self, loop, bus, ofono_manager_interface):
