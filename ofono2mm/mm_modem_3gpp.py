@@ -29,7 +29,6 @@ class MMModem3gppInterface(ServiceInterface):
             'InitialEpsBearer': Variant('o', '/'),
             'InitialEpsBearerSettings': Variant('a{sv}', {})
         }
-        self.UpdateRegistration()
 
     def UpdateRegistration(self):
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
@@ -47,6 +46,10 @@ class MMModem3gppInterface(ServiceInterface):
                 self.props['RegistrationState'] = Variant('u', 4)
             elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "roaming":
                 self.props['RegistrationState'] = Variant('u', 5)
+
+        self.props['Imei'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
+
+        self.emit_properties_changed({'Imei': self.props['Imei'].value})
         self.emit_properties_changed({'RegistrationState': self.props['RegistrationState'].value})
         self.emit_properties_changed({'OperatorName': self.props['OperatorName'].value})
         self.emit_properties_changed({'OperatorCode': self.props['OperatorCode'].value})

@@ -18,12 +18,12 @@ class MMSimInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                'Active': Variant('b', False),
+                'Active': Variant('b', True),
                 'SimIdentifier': Variant('s', ''),
                 'IMSI': Variant('s', '0'),
                 'Eid': Variant('s', ''),
-                'OperatorIdentifier': Variant('s', ''),
-                'OperatorName': Variant('s', ''),
+                'OperatorIdentifier': Variant('s', '0'),
+                'OperatorName': Variant('s', 'Some Operator'),
                 'EmergencyNumbers': Variant('as', [])
             }
 

@@ -34,7 +34,12 @@ class MMInterface(ServiceInterface):
         self.mm_modem_objects = []
         self.mm_modem_intefaces = []
 
-        self.ofono_modem_list = await self.ofono_manager_interface.call_get_modems()
+        self.ofono_modem_list = False
+        while not self.ofono_modem_list:
+            try:
+                self.ofono_modem_list = await self.ofono_manager_interface.call_get_modems()
+            except DBusError:
+                pass
 
         with open('/usr/lib/ofono2mm/ofono_modem.xml', 'r') as f:
             ofono_modem_introspection = f.read()
@@ -46,14 +51,13 @@ class MMInterface(ServiceInterface):
             ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
             ofono_modem_props = await ofono_modem_interface.call_get_properties()
             mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy, ofono_modem_interface, ofono_modem_props)
-            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
-            self.bus.export('/org/freedesktop/ModemManager/Modems/' + str(i), mm_modem_interface)
             ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
             await mm_modem_interface.init_ofono_interfaces()
-            await mm_modem_interface.init_mm_interfaces()
+            await mm_modem_interface.init_mm_sim_interface()
+            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
+            await mm_modem_interface.init_mm_3gpp_interface()
             mm_modem_interface.set_states()
             self.mm_modem_interfaces.append(mm_modem_interface)
-            self.mm_modem_objects.append('/org/freedesktop/ModemManager/Modems/' + str(i))
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
             i += 1
 
@@ -79,9 +83,13 @@ async def main(loop):
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
     with open('/usr/lib/ofono2mm/ofono.xml', 'r') as f:
         ofono_introspection = f.read()
-    ofono_proxy = bus.get_proxy_object('org.ofono', '/', ofono_introspection)
-
-    ofono_manager_interface = ofono_proxy.get_interface('org.ofono.Manager')
+    ofono_manager_interface = False
+    while not ofono_manager_interface:
+        try:
+            ofono_proxy = bus.get_proxy_object('org.ofono', '/', ofono_introspection)
+            ofono_manager_interface = ofono_proxy.get_interface('org.ofono.Manager')
+        except DBusError:
+            pass
 
     mm_manager_interface = MMInterface(loop, bus, ofono_manager_interface)
     bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
