@@ -6,6 +6,7 @@ from dbus_next.errors import DBusError
 from dbus_next import Variant, DBusError, BusType
 
 import asyncio
+import time
 
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_sim import MMSimInterface
@@ -60,25 +61,29 @@ class MMModemInterface(ServiceInterface):
                 }
 
     async def init_ofono_interfaces(self):
+        self.checking_new = False
         for iface in self.ofono_props['Interfaces'].value:
-            self.ofono_interfaces.update({
-                iface: self.ofono_proxy.get_interface(iface)
+            await self.add_ofono_interface(iface)
+
+    async def add_ofono_interface(self, iface):
+        self.ofono_interfaces.update({
+            iface: self.ofono_proxy.get_interface(iface)
+        })
+        try:
+            self.ofono_interface_props.update({
+                iface: await self.ofono_interfaces[iface].call_get_properties()
             })
-            no_dbus_error = False
-            while not no_dbus_error:
-                try:
-                    self.ofono_interface_props.update({
-                        iface: await self.ofono_interfaces[iface].call_get_properties()
-                    })
-                    self.ofono_interfaces[iface].on_property_changed(self.ofono_interface_changed(iface))
-                    no_dbus_error = True
-                except AttributeError:
-                    self.ofono_interface_props.update({
-                        iface: {}
-                    })
-                    no_dbus_error = True
-                except DBusError:
-                    pass
+            self.ofono_interfaces[iface].on_property_changed(self.ofono_interface_changed(iface))
+        except AttributeError:
+            self.ofono_interface_props.update({
+                iface: {}
+            })
+        except DBusError:
+            pass
+
+    async def remove_ofono_interface(self, iface):
+        self.ofono_interfaces.remove(iface)
+        self.ofono_interface_props.remove(iface)
 
     async def init_mm_sim_interface(self):
         self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
@@ -132,7 +137,7 @@ class MMModemInterface(ServiceInterface):
                 self.props['AccessTechnologies'] = Variant('u', 0)
         else:
             self.props['AccessTechnologies'] = Variant('u', 0)
-            self.props['SignalQuality'] = Variant('(ub)', [0, False])
+            self.props['SignalQuality'] = Variant('(ub)', [0, True])
 
         self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
 
@@ -328,7 +333,14 @@ class MMModemInterface(ServiceInterface):
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
         if name == "Interfaces":
-            self.loop.create_task(self.init_ofono_interfaces())
+            for iface in varval.value:
+                if not (iface in self.ofono_interfaces):
+                    self.loop.create_task(self.add_ofono_interface(iface))
+            for iface in self.ofono_interfaces:
+                if not (iface in varval.value):
+                    self.loop.create_task(self.remove_ofono_interface(iface))
+            #self.checking_new = True
+            #self.loop.create_task(self.init_ofono_interfaces())
         self.set_states()
         if self.mm_modem3gpp_interface:
             self.mm_modem3gpp_interface.ofono_changed(name, varval)
