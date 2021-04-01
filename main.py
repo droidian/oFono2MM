@@ -57,7 +57,7 @@ class MMInterface(ServiceInterface):
             await mm_modem_interface.init_mm_sim_interface()
             self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
             await mm_modem_interface.init_mm_3gpp_interface()
-            mm_modem_interface.set_states()
+            mm_modem_interface.set_props()
             self.mm_modem_interfaces.append(mm_modem_interface)
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
             i += 1

@@ -27,6 +27,9 @@ class MMSimInterface(ServiceInterface):
                 'EmergencyNumbers': Variant('as', [])
             }
 
+    def set_props(self):
+        pass
+
     @dbus_property(access=PropertyAccess.READ)
     def Active(self) -> 'b':
         return self.props['Active'].value
@@ -57,9 +60,11 @@ class MMSimInterface(ServiceInterface):
 
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
+        self.set_props()
 
     def ofono_interface_changed(self, iface):
         def ch(name, varval):
             self.ofono_interface_props[iface][name] = varval
+            self.set_props()
         return ch
 
