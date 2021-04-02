@@ -12,14 +12,14 @@ from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_sim import MMSimInterface
 
 class MMModemInterface(ServiceInterface):
-    def __init__(self, loop, index, bus, ofono_proxy, ofono_modem, ofono_props):
+    def __init__(self, loop, index, bus, ofono_proxy):
         super().__init__('org.freedesktop.ModemManager1.Modem')
         self.loop = loop
         self.index = index
         self.bus = bus
         self.ofono_proxy = ofono_proxy
-        self.ofono_modem = ofono_modem
-        self.ofono_props = ofono_props
+        self.ofono_modem = None
+        self.ofono_props = {}
         self.ofono_interfaces = {}
         self.ofono_interface_props = {}
         self.mm_modem3gpp_interface = False
@@ -34,27 +34,27 @@ class MMModemInterface(ServiceInterface):
                     'CurrentCapabilities': Variant('u', 4),
                     'MaxBearers': Variant('u', 0),
                     'MaxActiveBearers': Variant('u', 0),
-                    'Manufacturer': Variant('s', ofono_props['Manufacturer'].value if 'Manufacturer' in ofono_props else "Unknown"),
-                    'Model': Variant('s', ofono_props['Model'].value if 'Model' in ofono_props else "Unknown"),
+                    'Manufacturer': Variant('s', "Unknown"),
+                    'Model': Variant('s', "Unknown"),
                     'Revision': Variant('s', '1.0'),
                     'CarrierConfiguration': Variant('s', ''),
                     'CarrierConfigurationRevision': Variant('s', '1.0'),
-                    'HardwareRevision': Variant('s', ofono_props['Revision'].value if 'Revision' in ofono_props else "Unknown"),
+                    'HardwareRevision': Variant('s', "Unknown"),
                     'DeviceIdentifier': Variant('s', 'ril_0'),
                     'Device': Variant('s', ''),
                     'Drivers': Variant('as', []),
                     'Plugin': Variant('s', 'ofono2mm'),
                     'PrimaryPort': Variant('s', 'ttyMSM0'),
                     'Ports': Variant('a(su)', []),
-                    'EquipmentIdentifier': Variant('s', ofono_props['Serial'].value if 'Serial' in ofono_props else ''),
+                    'EquipmentIdentifier': Variant('s', ''),
                     'UnlockRequired': Variant('u', 0), 
                     'UnlockRetries': Variant('a{uu}', {}),
                     'State': Variant('i', -1),
                     'StateFailedReason': Variant('u', 0),
                     'AccessTechnologies': Variant('u', 0),
-                    'SignalQuality': Variant('(ub)', [0, True]),
+                    'SignalQuality': Variant('(ub)', [0, False]),
                     'OwnNumbers': Variant('as', []),
-                    'PowerState': Variant('u', 3 if ofono_props['Powered'].value else 1),
+                    'PowerState': Variant('u', 1),
                     'SupportedModes': Variant('a(uu)', [[0, 0]]),
                     'CurrentModes': Variant('(uu)', [0, 0]),
                     'SupportedBands': Variant('au', []),

@@ -49,14 +49,21 @@ class MMInterface(ServiceInterface):
 
         for modem in self.ofono_modem_list:
             ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0], ofono_modem_introspection)
-            ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
-            ofono_modem_props = await ofono_modem_interface.call_get_properties()
-            mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy, ofono_modem_interface, ofono_modem_props)
-            ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
+            mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy)
+            ofono_modem_props = False
+            while not ofono_modem_props:
+                try:
+                    ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
+                    ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
+                    ofono_modem_props = await ofono_modem_interface.call_get_properties()
+                except DBusError:
+                    pass
+            mm_modem_interface.ofono_modem = ofono_modem_interface
+            mm_modem_interface.ofono_props = ofono_modem_props
             await mm_modem_interface.init_ofono_interfaces()
             await mm_modem_interface.init_mm_sim_interface()
-            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
             await mm_modem_interface.init_mm_3gpp_interface()
+            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
             mm_modem_interface.set_props()
             self.mm_modem_interfaces.append(mm_modem_interface)
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
