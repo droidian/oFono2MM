@@ -103,6 +103,7 @@ class MMModem3gppInterface(ServiceInterface):
 
     def ofono_interface_changed(self, iface):
         def ch(name, varval):
-            self.ofono_interface_props[iface][name] = varval
+            if iface in self.ofono_interface_props:
+                self.ofono_interface_props[iface][name] = varval
             self.set_props()
         return ch
