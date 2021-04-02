@@ -30,21 +30,21 @@ class MMModemInterface(ServiceInterface):
                     'SimSlots': Variant('ao', ['/org/freedesktop/ModemManager/SIMs/' + str(self.index)]),
                     'PrimarySimSlot': Variant('u', 0),
                     'Bearers': Variant('ao', []),
-                    'SupportedCapabilities': Variant('au', [0, 4]),
-                    'CurrentCapabilities': Variant('u', 4),
+                    'SupportedCapabilities': Variant('au', [0]),
+                    'CurrentCapabilities': Variant('u', 0),
                     'MaxBearers': Variant('u', 0),
                     'MaxActiveBearers': Variant('u', 0),
-                    'Manufacturer': Variant('s', "Unknown"),
-                    'Model': Variant('s', "Unknown"),
-                    'Revision': Variant('s', '1.0'),
+                    'Manufacturer': Variant('s', ""),
+                    'Model': Variant('s', ""),
+                    'Revision': Variant('s', ''),
                     'CarrierConfiguration': Variant('s', ''),
-                    'CarrierConfigurationRevision': Variant('s', '1.0'),
-                    'HardwareRevision': Variant('s', "Unknown"),
-                    'DeviceIdentifier': Variant('s', 'ril_0'),
+                    'CarrierConfigurationRevision': Variant('s', ''),
+                    'HardwareRevision': Variant('s', ""),
+                    'DeviceIdentifier': Variant('s', "ofono_" + str(self.index)),
                     'Device': Variant('s', ''),
                     'Drivers': Variant('as', []),
                     'Plugin': Variant('s', 'ofono2mm'),
-                    'PrimaryPort': Variant('s', 'ttyMSM0'),
+                    'PrimaryPort': Variant('s', 'ofono_' + str(self.index)),
                     'Ports': Variant('a(su)', []),
                     'EquipmentIdentifier': Variant('s', ''),
                     'UnlockRequired': Variant('u', 0), 
@@ -157,6 +157,11 @@ class MMModemInterface(ServiceInterface):
             self.props['State'] = Variant('i', 3)
             self.props['PowerState'] = Variant('i', 1)
 
+        if 'org.ofono.SimManager' in self.ofono_interface_props:
+            self.props['OwnNumbers'] = Variant('as', self.ofono_interface_props['org.ofono.SimManager']['SubscriberNumbers'].value if 'SubscriberNumbers' in self.ofono_interface_props['org.ofono.SimManager'] else [])
+        else:
+            self.props['OwnNumbers'] = Variant('as', [])
+
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props and self.props['State'].value == 8:
             if "Technology" in self.ofono_interface_props['org.ofono.NetworkRegistration']:
                 current_tech = 0
@@ -173,9 +178,65 @@ class MMModemInterface(ServiceInterface):
             self.props['AccessTechnologies'] = Variant('u', 0)
             self.props['SignalQuality'] = Variant('(ub)', [0, True])
 
-        self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
+        caps = 0
+        modes = 0
+        pref = 0
+        if 'org.ofono.RadioSettings' in self.ofono_interface_props:
+            if 'AvailableTechnologies' in self.ofono_interface_props['org.ofono.RadioSettings']:
+                ofono_techs = self.ofono_interface_props['org.ofono.RadioSettings']['AvailableTechnologies'].value
+                if 'gsm' in ofono_techs:
+                    caps |= 4
+                    modes |= 2
+                if 'umts' in ofono_techs:
+                    caps |= 4
+                    modes |= 4
+                if 'lte' in ofono_techs:
+                    caps |= 8
+                    modes |= 8
+            if 'TechnologyPreference' in self.ofono_interface_props['org.ofono.RadioSettings']:
+                ofono_pref =  self.ofono_interface_props['org.ofono.RadioSettings']['TechnologyPreference'].value
+                if ofono_pref == 'lte':
+                    pref = 8
+                if ofono_pref == 'umts':
+                    pref = 4
+                if ofono_pref == 'gsm':
+                    pref = 2
+        self.props['CurrentCapabilities'] = Variant('u', caps)
+        self.props['SupportedCapabilities'] = Variant('au', [caps])
 
-        self.StateChanged(old_state, self.props['State'].value, 0)
+        supported_modes = []
+        if modes == 14:
+            supported_modes.append([14, 8])
+            supported_modes.append([6, 4])
+            supported_modes.append([2, 2])
+        if modes == 12:
+            supported_modes.append([12, 8])
+            supported_modes.append([4, 4])
+        if modes == 10:
+            supported_modes.append([10, 8])
+            supported_modes.append([2, 2])
+        if modes == 8:
+            supported_modes.append([8, 8])
+        if modes == 6:
+            supported_modes.append([6, 4])
+            supported_modes.append([2, 2])
+        if modes == 4:
+            supported_modes.append([4, 4])
+        if modes == 2:
+            supported_modes.append([2, 2])
+
+        self.props['SupportedModes'] = Variant('a(uu)', supported_modes)
+        for mode in supported_modes:
+            if mode[1] == pref:
+                self.props['CurrentModes'] = Variant('(uu)', [mode[0], pref])
+
+        self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
+        self.props['HardwareRevision'] = Variant('s', self.ofono_props['Revision'].value if 'Revision' in self.ofono_props else '')
+        self.props['Manufacturer'] = Variant('s', self.ofono_props['Manufacturer'].value if 'Manufacturer' in self.ofono_props else '')
+        self.props['Model'] = Variant('s', self.ofono_props['Model'].value if 'Model' in self.ofono_props else '')
+
+        if old_state != self.props['State'].value:
+            self.StateChanged(old_state, self.props['State'].value, 0)
 
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
