@@ -24,7 +24,7 @@ class MMModemInterface(ServiceInterface):
         self.ofono_interface_props = {}
         self.mm_modem3gpp_interface = False
         self.mm_sim_interface = False
-        self.sim = Variant('o', '/org/freedesktop/ModemManager1/SIMs/' + str(self.index))
+        self.sim = Variant('o', '/org/freedesktop/ModemManager/SIMs/' + str(self.index))
         self.props = {
                     'Sim': Variant('o', '/'),
                     'SimSlots': Variant('ao', ['/org/freedesktop/ModemManager/SIMs/' + str(self.index)]),
@@ -111,7 +111,7 @@ class MMModemInterface(ServiceInterface):
 
     async def init_mm_sim_interface(self):
         self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
-        self.bus.export('/org/freedesktop/ModemManager1/SIMs/' + str(self.index), self.mm_sim_interface)
+        self.bus.export('/org/freedesktop/ModemManager/SIMs/' + str(self.index), self.mm_sim_interface)
         self.mm_sim_interface.set_props()
 
     async def init_mm_3gpp_interface(self):
@@ -208,27 +208,29 @@ class MMModemInterface(ServiceInterface):
         if modes == 14:
             supported_modes.append([14, 8])
             supported_modes.append([6, 4])
-            supported_modes.append([2, 2])
+            supported_modes.append([2, 0])
         if modes == 12:
             supported_modes.append([12, 8])
-            supported_modes.append([4, 4])
+            supported_modes.append([4, 0])
         if modes == 10:
             supported_modes.append([10, 8])
-            supported_modes.append([2, 2])
+            supported_modes.append([2, 0])
         if modes == 8:
-            supported_modes.append([8, 8])
+            supported_modes.append([8, 0])
         if modes == 6:
             supported_modes.append([6, 4])
-            supported_modes.append([2, 2])
+            supported_modes.append([2, 0])
         if modes == 4:
-            supported_modes.append([4, 4])
+            supported_modes.append([4, 0])
         if modes == 2:
-            supported_modes.append([2, 2])
+            supported_modes.append([2, 0])
 
         self.props['SupportedModes'] = Variant('a(uu)', supported_modes)
         for mode in supported_modes:
             if mode[1] == pref:
                 self.props['CurrentModes'] = Variant('(uu)', [mode[0], pref])
+            if mode[1] == 0 and mode[0] == pref:
+                self.props['CurrentModes'] = Variant('(uu)', [mode[0], 0])
 
         self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
         self.props['HardwareRevision'] = Variant('s', self.ofono_props['Revision'].value if 'Revision' in self.ofono_props else '')
@@ -273,19 +275,31 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def SetCurrentCapabilities(self, capabilities: 'u'):
-        pass #TODO: Do set them!
+        pass
 
     @method()
-    def SetCurrentModes(self, modes: '(uu)'):
-        pass #TODO: Do set them!
+    async def SetCurrentModes(self, modes: '(uu)'):
+        if modes in self.props['SupportedModes'].value:
+            if modes[1] == 8:
+                await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'lte'))
+            if modes[1] == 4:
+                await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'umts'))
+            if modes[1] == 0:
+                if modes[0] | 2:
+                    await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'gsm'))
+                elif modes[0] | 4:
+                    await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'umts'))
+                elif modes[0] | 8:
+                    await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'lte'))
+        self.set_props()
 
     @method()
     def SetCurrentBands(self, bands: 'au'):
-        pass #TODO: Do set them!
+        pass 
 
     @method()
     def SetPrimarySimSlot(self, sim_slot: 'u'):
-        pass #TODO: Do set it!
+        pass 
 
     @method()
     def Command(self, cmd: 's', timeout: 'u') -> 's':
