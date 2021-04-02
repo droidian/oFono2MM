@@ -29,6 +29,35 @@ class MMSimInterface(ServiceInterface):
 
     def set_props(self):
         old_props = self.props
+
+        if 'org.ofono.SimManager' in self.ofono_interface_props:
+            if 'Present' in self.ofono_interface_props['org.ofono.SimManager']:
+                if self.ofono_interface_props['org.ofono.SimManager']:
+                    self.props['Active'] = Variant('b', True)
+                else:
+                    self.props['Active'] = Variant('b', False)
+            else:
+                self.props['Active'] = Variant('b', False)
+            if 'CardIdentifier' in self.ofono_interface_props['org.ofono.SimManager']:
+                self.props['SimIdentifier'] = Variant('s', self.ofono_interface_props['org.ofono.SimManager']['CardIdentifier'].value)
+            else:
+                self.props['SimIdentifier'] = Variant('s', '')
+            if 'SubscriberIdentity' in self.ofono_interface_props['org.ofono.SimManager']:
+                self.props['IMSI'] = Variant('s', self.ofono_interface_props['org.ofono.SimManager']['SubscriberIdentity'].value)
+            else:
+                self.props['IMSI'] = Variant('s', '')
+        else:
+            self.props['Active'] = False
+            self.props['SimIdentifier'] = Variant('s', '')
+            self.props['IMSI'] = Variant('s', '')
+
+        if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
+            self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+            self.props['OperatorIdentifier'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+        else:
+            self.props['OperatorName'] = Variant('s', '')
+            self.props['OperatorIdentifier'] = Variant('s', '')
+
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
                 self.emit_properties_changed({prop: self.props[prop].value})

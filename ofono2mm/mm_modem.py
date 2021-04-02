@@ -24,7 +24,7 @@ class MMModemInterface(ServiceInterface):
         self.ofono_interface_props = {}
         self.mm_modem3gpp_interface = False
         self.mm_sim_interface = False
-        self.sim = Variant('o', '/org/freedesktop/ModemManager/SIMs/' + str(self.index))
+        self.sim = Variant('o', '/org/freedesktop/ModemManager1/SIMs/' + str(self.index))
         self.props = {
                     'Sim': Variant('o', '/'),
                     'SimSlots': Variant('ao', ['/org/freedesktop/ModemManager/SIMs/' + str(self.index)]),
@@ -111,7 +111,7 @@ class MMModemInterface(ServiceInterface):
 
     async def init_mm_sim_interface(self):
         self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
-        self.bus.export('/org/freedesktop/ModemManager/SIMs/' + str(self.index), self.mm_sim_interface)
+        self.bus.export('/org/freedesktop/ModemManager1/SIMs/' + str(self.index), self.mm_sim_interface)
         self.mm_sim_interface.set_props()
 
     async def init_mm_3gpp_interface(self):
