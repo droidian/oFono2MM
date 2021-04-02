@@ -28,7 +28,10 @@ class MMSimInterface(ServiceInterface):
             }
 
     def set_props(self):
-        pass
+        old_props = self.props
+        for prop in self.props:
+            if self.props[prop].value != old_props[prop].value:
+                self.emit_properties_changed({prop: self.props[prop].value})
 
     @dbus_property(access=PropertyAccess.READ)
     def Active(self) -> 'b':

@@ -31,6 +31,7 @@ class MMModem3gppInterface(ServiceInterface):
         }
 
     def set_props(self):
+        old_props = self.props
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
             self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
             self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
@@ -52,10 +53,9 @@ class MMModem3gppInterface(ServiceInterface):
 
         self.props['Imei'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
 
-        self.emit_properties_changed({'Imei': self.props['Imei'].value})
-        self.emit_properties_changed({'RegistrationState': self.props['RegistrationState'].value})
-        self.emit_properties_changed({'OperatorName': self.props['OperatorName'].value})
-        self.emit_properties_changed({'OperatorCode': self.props['OperatorCode'].value})
+        for prop in self.props:
+            if self.props[prop].value != old_props[prop].value:
+                self.emit_properties_changed({prop: self.props[prop].value})
 
     @dbus_property(access=PropertyAccess.READ)
     def Imei(self) -> 's':
