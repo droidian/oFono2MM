@@ -61,6 +61,35 @@ class MMModem3gppInterface(ServiceInterface):
             if self.props[prop].value != old_props[prop].value:
                 self.emit_properties_changed({prop: self.props[prop].value})
 
+    @method()
+    async def Scan(self) -> 'aa{sv}':
+        operators = []
+        ofono_operators = await self.ofono_interfaces['org.ofono.NetworkRegistration'].call_scan()
+        for ofono_operator in ofono_operators:
+            mm_operator = {}
+            if ofono_operator[1]['Status'].value == "unknown":
+                mm_operator.update({'status': Variant('u', 0)})
+            if ofono_operator[1]['Status'].value == "available":
+                mm_operator.update({'status': Variant('u', 1)})
+            if ofono_operator[1]['Status'].value == "current":
+                mm_operator.update({'status': Variant('u', 2)})
+            if ofono_operator[1]['Status'].value == "forbidden":
+                mm_operator.update({'status': Variant('u', 3)})
+            mm_operator.update({'operator-long': ofono_operator[1]['Name']})
+            mm_operator.update({'operator-short': ofono_operator[1]['Name']})
+            mm_operator.update({'operator-code': Variant('s', ofono_operator[1]['MobileCountryCode'].value + ofono_operator[1]['MobileNetworkCode'].value)})
+            current_tech = 0
+            for tech in ofono_operator[1]['Technologies'].value:
+                if tech == "lte":
+                    current_tech |= 1 << 14
+                elif tech == "umts":
+                    current_tech |= 1 << 5
+                elif tech == "gsm":
+                    current_tech |= 1 << 1
+            mm_operator.update({'access-technology': Variant('u', current_tech)})
+            operators.append(mm_operator)
+        return operators
+
     @dbus_property(access=PropertyAccess.READ)
     def Imei(self) -> 's':
         return self.props['Imei'].value
