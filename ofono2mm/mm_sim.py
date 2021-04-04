@@ -63,6 +63,29 @@ class MMSimInterface(ServiceInterface):
             if self.props[prop].value != old_props[prop].value:
                 self.emit_properties_changed({prop: self.props[prop].value})
 
+    @method()
+    async def SendPin(self, pin: 's'):
+        if 'org.ofono.SimManager' in self.ofono_interfaces:
+            await self.ofono_interfaces['org.ofono.SimManager'].call_enter_pin('pin', pin)
+
+    @method()
+    async def SendPuk(self, puk: 's', pin: 's'):
+        if 'org.ofono.SimManager' in self.ofono_interfaces:
+            await self.ofono_interfaces['org.ofono.SimManager'].call_reset_pin('pin', puk, pin)
+
+    @method()
+    async def EnablePin(self, pin: 's', enabled: 'b'):
+        if 'org.ofono.SimManager' in self.ofono_interfaces:
+            if enabled:
+                await self.ofono_interfaces['org.ofono.SimManager'].call_lock_pin('pin', pin)
+            else:
+                await self.ofono_interfaces['org.ofono.SimManager'].call_unlock_pin('pin', pin)
+
+    @method()
+    async def ChangePin(self, old_pin: 's', new_pin: 's'):
+        if 'org.ofono.SimManager' in self.ofono_interfaces:
+            await self.ofono_interfaces['org.ofono.SimManager'].call_change_pin('pin', old_pin, new_pin)
+
     @dbus_property(access=PropertyAccess.READ)
     def Active(self) -> 'b':
         return self.props['Active'].value
