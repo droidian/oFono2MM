@@ -8,11 +8,12 @@ from dbus_next import Variant, DBusError, BusType
 import asyncio
 
 class MMSimInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
+    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Sim')
         self.index = index
         self.bus = bus
         self.ofono_proxy = ofono_proxy
+        self.modem_name = modem_name
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
         self.ofono_interfaces = ofono_interfaces

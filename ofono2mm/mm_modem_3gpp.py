@@ -8,11 +8,12 @@ from dbus_next import Variant, DBusError, BusType
 import asyncio
 
 class MMModem3gppInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
+    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Modem.Modem3gpp')
         self.index = index
         self.bus = bus
         self.ofono_proxy = ofono_proxy
+        self.modem_name = modem_name
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
         self.ofono_interfaces = ofono_interfaces
@@ -60,6 +61,25 @@ class MMModem3gppInterface(ServiceInterface):
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
                 self.emit_properties_changed({prop: self.props[prop].value})
+
+    @method()
+    async def Register(self, operator_id: 's'):
+        if operator_id == "":
+            if 'org.ofono.NetworkRegistration' in self.ofono_interfaces:
+                try:
+                    await self.ofono_interfaces['org.ofono.NetworkRegistration'].call_register()
+                except DBusError:
+                    pass
+            return
+        with open('/usr/lib/ofono2mm/ofono_operator.xml', 'r') as f:
+            ofono_operator_introspection = f.read()
+        try:
+            ofono_operator_proxy = self.bus.get_proxy_object('org.ofono', str(self.modem_name) + "/operator/" + str(operator_id), ofono_operator_introspection)
+            ofono_operator_interface = ofono_operator_proxy.get_interface('org.ofono.NetworkOperator')
+            await ofono_operator_interface.call_register()
+        except DBusError:
+            return
+
 
     @method()
     async def Scan(self) -> 'aa{sv}':

@@ -49,7 +49,7 @@ class MMInterface(ServiceInterface):
 
         for modem in self.ofono_modem_list:
             ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0], ofono_modem_introspection)
-            mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy)
+            mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy, modem[0])
             ofono_modem_props = False
             while not ofono_modem_props:
                 try:

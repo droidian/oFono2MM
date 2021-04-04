@@ -12,12 +12,13 @@ from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_sim import MMSimInterface
 
 class MMModemInterface(ServiceInterface):
-    def __init__(self, loop, index, bus, ofono_proxy):
+    def __init__(self, loop, index, bus, ofono_proxy, modem_name):
         super().__init__('org.freedesktop.ModemManager1.Modem')
         self.loop = loop
         self.index = index
         self.bus = bus
         self.ofono_proxy = ofono_proxy
+        self.modem_name = modem_name
         self.ofono_modem = None
         self.ofono_props = {}
         self.ofono_interfaces = {}
@@ -110,12 +111,12 @@ class MMModemInterface(ServiceInterface):
             self.mm_sim_interface.set_props()
 
     async def init_mm_sim_interface(self):
-        self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export('/org/freedesktop/ModemManager/SIMs/' + str(self.index), self.mm_sim_interface)
         self.mm_sim_interface.set_props()
 
     async def init_mm_3gpp_interface(self):
-        self.mm_modem3gpp_interface = MMModem3gppInterface(self.index, self.bus, self.ofono_proxy, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        self.mm_modem3gpp_interface = MMModem3gppInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(self.index), self.mm_modem3gpp_interface)
         self.mm_modem3gpp_interface.set_props()
 
