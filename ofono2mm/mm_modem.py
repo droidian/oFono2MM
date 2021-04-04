@@ -9,6 +9,7 @@ import asyncio
 import time
 
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
+from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_sim import MMSimInterface
 
 class MMModemInterface(ServiceInterface):
@@ -24,6 +25,7 @@ class MMModemInterface(ServiceInterface):
         self.ofono_interfaces = {}
         self.ofono_interface_props = {}
         self.mm_modem3gpp_interface = False
+        self.mm_modem_messaging_interface = False
         self.mm_sim_interface = False
         self.sim = Variant('o', '/org/freedesktop/ModemManager/SIMs/' + str(self.index))
         self.props = {
@@ -96,6 +98,12 @@ class MMModemInterface(ServiceInterface):
             self.mm_modem3gpp_interface.set_props()
         if self.mm_sim_interface:
             self.mm_sim_interface.set_props()
+        if not self.mm_modem_messaging_interface and iface == "org.ofono.MessageManager":
+            self.mm_modem_messaging_interface = MMModemMessagingInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(self.index), self.mm_modem_messaging_interface)
+            self.mm_modem_messaging_interface.set_props()
+            await self.mm_modem_messaging_interface.init_messages()
+
 
     async def remove_ofono_interface(self, iface):
         if iface in self.ofono_interfaces:
@@ -119,6 +127,13 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem3gpp_interface = MMModem3gppInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(self.index), self.mm_modem3gpp_interface)
         self.mm_modem3gpp_interface.set_props()
+
+    async def init_mm_messaging_interface(self):
+        if 'org.ofono.MessageManager' in self.ofono_interfaces and not self.mm_modem_messaging_interface:
+            self.mm_modem_messaging_interface = MMModemMessagingInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(self.index), self.mm_modem_messaging_interface)
+            self.mm_modem_messaging_interface.set_props()
+            await self.mm_modem_messaging_interface.init_messages()
 
     def set_props(self):
         old_props = self.props.copy()
