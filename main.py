@@ -11,6 +11,8 @@ import time
 
 from ofono2mm import MMModemInterface
 
+has_bus = False
+
 class MMInterface(ServiceInterface):
     def __init__(self, loop, bus, ofono_manager_interface):
         super().__init__('org.freedesktop.ModemManager1')
@@ -29,6 +31,8 @@ class MMInterface(ServiceInterface):
         await self.find_ofono_modems()
 
     async def find_ofono_modems(self):
+        global has_bus
+
         for mm_object in self.mm_modem_objects:
             self.bus.unexport(mm_object)
 
@@ -70,6 +74,10 @@ class MMInterface(ServiceInterface):
             self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
             i += 1
 
+        if not has_bus and len(self.mm_modem_objects) != 0:
+            await self.bus.request_name('org.freedesktop.ModemManager1')
+            has_bus = True
+
     def ofono_modem_added(self, path, mprops):
        self.loop.create_task(self.find_ofono_modems())
 
@@ -106,7 +114,6 @@ async def main(loop):
     ofono_manager_interface.on_modem_added(mm_manager_interface.ofono_modem_added)
     ofono_manager_interface.on_modem_removed(mm_manager_interface.ofono_modem_removed)
 
-    await bus.request_name('org.freedesktop.ModemManager1')
     await bus.wait_for_disconnect()
 
 loop = asyncio.get_event_loop()
