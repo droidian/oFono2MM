@@ -67,6 +67,25 @@ class MMModemMessagingInterface(ServiceInterface):
             self.emit_properties_changed({'Messages': self.props['Messages'].value})
             self.Deleted(path)
 
+    @method()
+    async def Create(self, properties: 'a{sv}') -> 'o':
+        global message_i
+        if 'number' not in properties or 'text' not in properties:
+            return
+        mm_sms_interface = MMSmsInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        mm_sms_interface.props.update({
+            'Text': properties['text'],
+            'Number': properties['number'],
+            'DeliveryReportRequest': properties['delivery-report-request'] if 'delivery-report-request' in properties else Variant('b', False)
+        })
+        self.bus.export('/org/freedesktop/ModemManager1/SMS/' + str(message_i), mm_sms_interface)
+        self.props['Messages'].value.append('/org/freedesktop/ModemManager1/SMS/' + str(message_i))
+        self.emit_properties_changed({'Messages': self.props['Messages'].value})
+        self.Added('/org/freedesktop/ModemManager1/SMS/' + str(message_i), True)
+        message_i += 1
+        if 'org.ofono.MessageManager' in self.ofono_interfaces:
+            ofono_sms_path = await self.ofono_interfaces['org.ofono.MessageManager'].call_send_message(properties['number'].value, properties['text'].value)
+
     @signal()
     def Added(self, path, received) -> 'ob':
         return [path, received]
