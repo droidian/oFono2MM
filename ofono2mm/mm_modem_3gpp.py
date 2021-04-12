@@ -57,6 +57,7 @@ class MMModem3gppInterface(ServiceInterface):
             self.props['RegistrationState'] = Variant('u', 4)
 
         self.props['Imei'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
+        self.props['EnableFacilityLocks'] = Variant('u', 1)
 
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:

@@ -49,7 +49,7 @@ class MMInterface(ServiceInterface):
         with open('/usr/lib/ofono2mm/ofono_modem.xml', 'r') as f:
             ofono_modem_introspection = f.read()
 
-        i = 1
+        i = 0
 
         for modem in self.ofono_modem_list:
             ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0], ofono_modem_introspection)
@@ -65,13 +65,13 @@ class MMInterface(ServiceInterface):
             mm_modem_interface.ofono_modem = ofono_modem_interface
             mm_modem_interface.ofono_props = ofono_modem_props
             await mm_modem_interface.init_ofono_interfaces()
+            mm_modem_interface.set_props()
             await mm_modem_interface.init_mm_sim_interface()
+            self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(i), mm_modem_interface)
             await mm_modem_interface.init_mm_3gpp_interface()
             await mm_modem_interface.init_mm_messaging_interface()
-            self.bus.export('/org/freedesktop/ModemManager1/Modems/' + str(i), mm_modem_interface)
-            mm_modem_interface.set_props()
             self.mm_modem_interfaces.append(mm_modem_interface)
-            self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modems/' + str(i))
+            self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(i))
             i += 1
 
         if not has_bus and len(self.mm_modem_objects) != 0:
