@@ -65,9 +65,9 @@ class MMInterface(ServiceInterface):
             mm_modem_interface.ofono_modem = ofono_modem_interface
             mm_modem_interface.ofono_props = ofono_modem_props
             await mm_modem_interface.init_ofono_interfaces()
+            self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(i), mm_modem_interface)
             mm_modem_interface.set_props()
             await mm_modem_interface.init_mm_sim_interface()
-            self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(i), mm_modem_interface)
             await mm_modem_interface.init_mm_3gpp_interface()
             await mm_modem_interface.init_mm_messaging_interface()
             self.mm_modem_interfaces.append(mm_modem_interface)

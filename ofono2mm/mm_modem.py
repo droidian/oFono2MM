@@ -52,7 +52,7 @@ class MMModemInterface(ServiceInterface):
                     'EquipmentIdentifier': Variant('s', ''),
                     'UnlockRequired': Variant('u', 0), 
                     'UnlockRetries': Variant('a{uu}', {}),
-                    'State': Variant('i', -1),
+                    'State': Variant('i', 6),
                     'StateFailedReason': Variant('u', 0),
                     'AccessTechnologies': Variant('u', 0),
                     'SignalQuality': Variant('(ub)', [0, False]),
@@ -93,7 +93,6 @@ class MMModemInterface(ServiceInterface):
             self.ofono_interfaces[iface].on_property_changed(self.ofono_interface_changed(iface))
         except AttributeError:
             pass
-        self.set_props()
         if self.mm_modem3gpp_interface:
             self.mm_modem3gpp_interface.set_props()
         if self.mm_sim_interface:
@@ -136,29 +135,35 @@ class MMModemInterface(ServiceInterface):
     def set_props(self):
         old_props = self.props.copy()
         old_state = self.props['State'].value
+        self.props['UnlockRequired'] = Variant('u', 1)
         if self.ofono_props['Powered'].value and 'org.ofono.SimManager' in self.ofono_interface_props:
             if 'Present' in self.ofono_interface_props['org.ofono.SimManager']:
                 if self.ofono_interface_props['org.ofono.SimManager']['Present'].value and 'PinRequired' in self.ofono_interface_props['org.ofono.SimManager']:
                     if self.ofono_interface_props['org.ofono.SimManager']['PinRequired'].value == 'none':
                         self.props['UnlockRequired'] = Variant('u', 1)
-                        if self.ofono_props['Online'].value and 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
-                            if ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
-                                if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
-                                    self.props['State'] = Variant('i', 8)
-                                    if 'Strength' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
-                                        self.props['SignalQuality'] = Variant('(ub)', [self.ofono_interface_props['org.ofono.NetworkRegistration']['Strength'].value, True])
-                                elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'searching':
-                                    self.props['State'] = Variant('i', 7)
+                        if self.ofono_props['Online'].value: 
+                            if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
+                                if ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
+                                    if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
+                                        self.props['State'] = Variant('i', 8)
+                                        if 'Strength' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
+                                            self.props['SignalQuality'] = Variant('(ub)', [self.ofono_interface_props['org.ofono.NetworkRegistration']['Strength'].value, True])
+                                    elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'searching':
+                                        self.props['State'] = Variant('i', 7)
+                                    else:
+                                        self.props['State'] = Variant('i', 6)
                                 else:
                                     self.props['State'] = Variant('i', 6)
                             else:
                                 self.props['State'] = Variant('i', 6)
                         else:
                             self.props['State'] = Variant('i', 3)
+                        self.props['UnlockRequired'] = Variant('u', 1)
                     else:
                         self.props['UnlockRequired'] = Variant('u', 2)
                         self.props['State'] = Variant('i', 2)
                     self.props['Sim'] = self.sim
+                    self.props['StateFailedReason'] = Variant('i', 0)
                 else:
                     self.props['Sim'] = Variant('o', '/')
                     self.props['State'] = Variant('i', -1)
@@ -218,7 +223,7 @@ class MMModemInterface(ServiceInterface):
         self.props['CurrentCapabilities'] = Variant('u', caps)
         self.props['SupportedCapabilities'] = Variant('au', [caps])
 
-        if self.props['State'].value < 4:
+        if caps == 0:
             self.props['CurrentCapabilities'] = Variant('u', 4)
             self.props['SupportedCapabilities'] = Variant('au', [4])
 
@@ -250,7 +255,7 @@ class MMModemInterface(ServiceInterface):
             if mode[1] == 0 and mode[0] == pref:
                 self.props['CurrentModes'] = Variant('(uu)', [mode[0], 0])
 
-        if self.props['State'].value < 4:
+        if supported_modes == []:
             self.props['SupportedModes'] = Variant('a(uu)', [[0,0]])
             self.props['CurrentModes'] = Variant('(uu)', [0, 0])
 
@@ -260,11 +265,13 @@ class MMModemInterface(ServiceInterface):
         self.props['Model'] = Variant('s', self.ofono_props['Model'].value if 'Model' in self.ofono_props else 'Unknown')
 
         if old_state != self.props['State'].value:
-            self.StateChanged(old_state, self.props['State'].value, 0)
+            self.StateChanged(old_state, self.props['State'].value, 1)
 
+        changed_props = {}
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
-                self.emit_properties_changed({prop: self.props[prop].value})
+                changed_props.update({ prop: self.props[prop].value })
+        self.emit_properties_changed(changed_props)
 
     @method()
     async def Enable(self, enable: 'b'):

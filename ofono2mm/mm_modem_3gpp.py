@@ -32,7 +32,7 @@ class MMModem3gppInterface(ServiceInterface):
         }
 
     def set_props(self):
-        old_props = self.props
+        old_props = self.props.copy()
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
             self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
             self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
@@ -57,11 +57,13 @@ class MMModem3gppInterface(ServiceInterface):
             self.props['RegistrationState'] = Variant('u', 4)
 
         self.props['Imei'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
-        self.props['EnableFacilityLocks'] = Variant('u', 1)
+        self.props['EnableFacilityLocks'] = Variant('u', 0)
 
+        changed_props = {}
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
-                self.emit_properties_changed({prop: self.props[prop].value})
+                changed_props.update({ prop: self.props[prop].value })
+        self.emit_properties_changed(changed_props)
 
     @method()
     async def Register(self, operator_id: 's'):
