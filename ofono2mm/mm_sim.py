@@ -1,7 +1,7 @@
 from dbus_next.service import (ServiceInterface,
                                method, dbus_property)
 from dbus_next.constants import PropertyAccess
-from dbus_next import Variant, DBusError
+from dbus_next import Variant
 
 
 class MMSimInterface(ServiceInterface):
@@ -121,4 +121,3 @@ class MMSimInterface(ServiceInterface):
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
         return ch
-

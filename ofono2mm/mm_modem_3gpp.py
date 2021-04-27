@@ -1,5 +1,5 @@
 from dbus_next.service import (ServiceInterface,
-                               method, dbus_property, signal)
+                               method, dbus_property)
 from dbus_next.constants import PropertyAccess
 from dbus_next import Variant, DBusError
 
@@ -79,7 +79,6 @@ class MMModem3gppInterface(ServiceInterface):
             await ofono_operator_interface.call_register()
         except DBusError:
             return
-
 
     @method()
     async def Scan(self) -> 'aa{sv}':

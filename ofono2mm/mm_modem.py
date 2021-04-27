@@ -1,12 +1,13 @@
 from dbus_next.service import (ServiceInterface,
                                method, dbus_property, signal)
 from dbus_next.constants import PropertyAccess
-from dbus_next import Variant, DBusError, BusType
+from dbus_next import Variant, DBusError
 
 
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_sim import MMSimInterface
+
 
 class MMModemInterface(ServiceInterface):
     def __init__(self, loop, index, bus, ofono_proxy, modem_name):
@@ -46,7 +47,7 @@ class MMModemInterface(ServiceInterface):
                     'PrimaryPort': Variant('s', 'ofono_' + str(self.index)),
                     'Ports': Variant('a(su)', [['ofono_' + str(self.index), 0]]),
                     'EquipmentIdentifier': Variant('s', ''),
-                    'UnlockRequired': Variant('u', 0), 
+                    'UnlockRequired': Variant('u', 0),
                     'UnlockRetries': Variant('a{uu}', {}),
                     'State': Variant('i', 6),
                     'StateFailedReason': Variant('u', 0),
@@ -97,7 +98,6 @@ class MMModemInterface(ServiceInterface):
             self.mm_modem_messaging_interface.set_props()
             await self.mm_modem_messaging_interface.init_messages()
 
-
     async def remove_ofono_interface(self, iface):
         if iface in self.ofono_interfaces:
             self.ofono_interfaces.pop(iface)
@@ -137,7 +137,7 @@ class MMModemInterface(ServiceInterface):
                 if self.ofono_interface_props['org.ofono.SimManager']['Present'].value and 'PinRequired' in self.ofono_interface_props['org.ofono.SimManager']:
                     if self.ofono_interface_props['org.ofono.SimManager']['PinRequired'].value == 'none':
                         self.props['UnlockRequired'] = Variant('u', 1)
-                        if self.ofono_props['Online'].value: 
+                        if self.ofono_props['Online'].value:
                             if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
                                 if ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
                                     if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
@@ -209,7 +209,7 @@ class MMModemInterface(ServiceInterface):
                     caps |= 8
                     modes |= 8
             if 'TechnologyPreference' in self.ofono_interface_props['org.ofono.RadioSettings']:
-                ofono_pref =  self.ofono_interface_props['org.ofono.RadioSettings']['TechnologyPreference'].value
+                ofono_pref = self.ofono_interface_props['org.ofono.RadioSettings']['TechnologyPreference'].value
                 if ofono_pref == 'lte':
                     pref = 8
                 if ofono_pref == 'umts':
@@ -252,7 +252,7 @@ class MMModemInterface(ServiceInterface):
                 self.props['CurrentModes'] = Variant('(uu)', [mode[0], 0])
 
         if supported_modes == []:
-            self.props['SupportedModes'] = Variant('a(uu)', [[0,0]])
+            self.props['SupportedModes'] = Variant('a(uu)', [[0, 0]])
             self.props['CurrentModes'] = Variant('(uu)', [0, 0])
 
         self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
@@ -279,7 +279,7 @@ class MMModemInterface(ServiceInterface):
         self.emit_properties_changed({'State': self.props['State'].value})
         await self.ofono_modem.call_set_property('Online', Variant('b', enable))
         self.set_props()
-    
+
     @method()
     def ListBearers(self) -> 'ao':
         return self.props['Bearers'].value
@@ -327,11 +327,11 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def SetCurrentBands(self, bands: 'au'):
-        pass 
+        pass
 
     @method()
     def SetPrimarySimSlot(self, sim_slot: 'u'):
-        pass 
+        pass
 
     @method()
     def Command(self, cmd: 's', timeout: 'u') -> 's':

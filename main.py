@@ -11,6 +11,7 @@ from ofono2mm import MMModemInterface
 
 has_bus = False
 
+
 class MMInterface(ServiceInterface):
     def __init__(self, loop, bus, ofono_manager_interface):
         super().__init__('org.freedesktop.ModemManager1')
@@ -77,10 +78,10 @@ class MMInterface(ServiceInterface):
             has_bus = True
 
     def ofono_modem_added(self, path, mprops):
-       self.loop.create_task(self.find_ofono_modems())
+        self.loop.create_task(self.find_ofono_modems())
 
     def ofono_modem_removed(self, path):
-       self.loop.create_task(self.find_ofono_modems())
+        self.loop.create_task(self.find_ofono_modems())
 
     @method()
     def SetLogging(self, level: 's'):
@@ -93,6 +94,7 @@ class MMInterface(ServiceInterface):
     @method()
     def InhibitDevice(self, uid: 's', inhibit: 'b'):
         pass
+
 
 async def main(loop):
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
