@@ -1,13 +1,11 @@
 #!/usr/bin/env python3
 from dbus_next.aio import MessageBus
 from dbus_next.service import (ServiceInterface,
-                               method, dbus_property, signal)
+                               method, dbus_property)
 from dbus_next.constants import PropertyAccess
-from dbus_next.errors import DBusError
-from dbus_next import Variant, DBusError, BusType
+from dbus_next import DBusError, BusType
 
 import asyncio
-import time
 
 from ofono2mm import MMModemInterface
 

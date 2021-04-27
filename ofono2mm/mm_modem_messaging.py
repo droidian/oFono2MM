@@ -1,15 +1,13 @@
-from dbus_next.aio import MessageBus
 from dbus_next.service import (ServiceInterface,
                                method, dbus_property, signal)
 from dbus_next.constants import PropertyAccess
-from dbus_next.errors import DBusError
-from dbus_next import Variant, DBusError, BusType
+from dbus_next import Variant
 
-import asyncio
 
 from ofono2mm.mm_sms import MMSmsInterface
 
 message_i = 1
+
 
 class MMModemMessagingInterface(ServiceInterface):
     def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
