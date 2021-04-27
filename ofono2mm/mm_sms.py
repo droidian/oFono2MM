@@ -5,7 +5,8 @@ from dbus_next import Variant
 
 
 class MMSmsInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
+    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem,
+                 ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Sms')
         self.index = index
         self.bus = bus

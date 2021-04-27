@@ -5,7 +5,8 @@ from dbus_next import Variant
 
 
 class MMSimInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
+    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem,
+                 ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Sim')
         self.index = index
         self.bus = bus
@@ -29,29 +30,32 @@ class MMSimInterface(ServiceInterface):
         old_props = self.props
 
         if 'org.ofono.SimManager' in self.ofono_interface_props:
-            if 'Present' in self.ofono_interface_props['org.ofono.SimManager']:
-                if self.ofono_interface_props['org.ofono.SimManager']:
-                    self.props['Active'] = Variant('b', True)
-                else:
-                    self.props['Active'] = Variant('b', False)
-            else:
-                self.props['Active'] = Variant('b', False)
-            if 'CardIdentifier' in self.ofono_interface_props['org.ofono.SimManager']:
-                self.props['SimIdentifier'] = Variant('s', self.ofono_interface_props['org.ofono.SimManager']['CardIdentifier'].value)
-            else:
-                self.props['SimIdentifier'] = Variant('s', '')
-            if 'SubscriberIdentity' in self.ofono_interface_props['org.ofono.SimManager']:
-                self.props['IMSI'] = Variant('s', self.ofono_interface_props['org.ofono.SimManager']['SubscriberIdentity'].value)
-            else:
-                self.props['IMSI'] = Variant('s', '')
+            sim_manager = self.ofono_interface_props['org.ofono.SimManager']
+            self.props['Active'] = Variant('b', 'Present' in sim_manager)
+            sim_identifier = (sim_manager['CardIdentifier'].value
+                              if 'CardIdentifier' in sim_manager
+                              else '')
+            self.props['SimIdentifier'] = Variant('s', sim_identifier)
+            identity = (sim_manager['SubscriberIdentity'].value
+                        if 'SubscriberIdentity' in sim_manager
+                        else '')
+            self.props['IMSI'] = Variant('s', identity)
         else:
             self.props['Active'] = False
             self.props['SimIdentifier'] = Variant('s', '')
             self.props['IMSI'] = Variant('s', '')
 
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
-            self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
-            self.props['OperatorIdentifier'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
+            network_registration = \
+                self.ofono_interface_props['org.ofono.NetworkRegistration']
+            name = (network_registration['Name'].value
+                    if 'Name' in network_registration
+                    else '')
+            self.props['OperatorName'] = Variant('s', name)
+            code = (network_registration['MobileNetworkCode'].value
+                    if 'MobileNetworkCode' in network_registration
+                    else '')
+            self.props['OperatorIdentifier'] = Variant('s', code)
         else:
             self.props['OperatorName'] = Variant('s', '')
             self.props['OperatorIdentifier'] = Variant('s', '')
@@ -63,25 +67,30 @@ class MMSimInterface(ServiceInterface):
     @method()
     async def SendPin(self, pin: 's'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
-            await self.ofono_interfaces['org.ofono.SimManager'].call_enter_pin('pin', pin)
+            await self.ofono_interfaces['org.ofono.SimManager'] \
+                      .call_enter_pin('pin', pin)
 
     @method()
     async def SendPuk(self, puk: 's', pin: 's'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
-            await self.ofono_interfaces['org.ofono.SimManager'].call_reset_pin('pin', puk, pin)
+            await self.ofono_interfaces['org.ofono.SimManager'] \
+                      .call_reset_pin('pin', puk, pin)
 
     @method()
     async def EnablePin(self, pin: 's', enabled: 'b'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
             if enabled:
-                await self.ofono_interfaces['org.ofono.SimManager'].call_lock_pin('pin', pin)
+                await self.ofono_interfaces['org.ofono.SimManager'] \
+                          .call_lock_pin('pin', pin)
             else:
-                await self.ofono_interfaces['org.ofono.SimManager'].call_unlock_pin('pin', pin)
+                await self.ofono_interfaces['org.ofono.SimManager'] \
+                          .call_unlock_pin('pin', pin)
 
     @method()
     async def ChangePin(self, old_pin: 's', new_pin: 's'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
-            await self.ofono_interfaces['org.ofono.SimManager'].call_change_pin('pin', old_pin, new_pin)
+            await self.ofono_interfaces['org.ofono.SimManager'] \
+                      .call_change_pin('pin', old_pin, new_pin)
 
     @dbus_property(access=PropertyAccess.READ)
     def Active(self) -> 'b':

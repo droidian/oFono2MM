@@ -5,7 +5,8 @@ from dbus_next import Variant, DBusError
 
 
 class MMModem3gppInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
+    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem,
+                 ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Modem.Modem3gpp')
         self.index = index
         self.bus = bus
@@ -31,21 +32,22 @@ class MMModem3gppInterface(ServiceInterface):
     def set_props(self):
         old_props = self.props.copy()
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
-            self.props['OperatorName'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['Name'].value if "Name" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
-            self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
-            if 'Status' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
-                if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unregisered":
-                    self.props['RegistrationState'] = Variant('u', 0)
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "registered":
-                    self.props['RegistrationState'] = Variant('u', 1)
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "searching":
-                    self.props['RegistrationState'] = Variant('u', 2)
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "denied":
-                    self.props['RegistrationState'] = Variant('u', 3)
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unknown":
-                    self.props['RegistrationState'] = Variant('u', 4)
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "roaming":
-                    self.props['RegistrationState'] = Variant('u', 5)
+            network_registration = \
+                self.ofono_interface_props['org.ofono.NetworkRegistration']
+            operator_name = (network_registration['Name'].value
+                             if "Name" in network_registration
+                             else '')
+            self.props['OperatorName'] = Variant('s', operator_name)
+            operator_code = (network_registration['MobileNetworkCode'].value
+                             if "MobileNetworkCode" in network_registration
+                             else '')
+            self.props['OperatorCode'] = Variant('s', operator_code)
+            if 'Status' in network_registration:
+                status = network_registration['Status'].value
+                reg_states = ["unregistered", "registered", "searching",
+                              "denied", "unknown", "roaming"]
+                reg_state = reg_states.index(status)
+                self.props['RegistrationState'] = Variant('u', reg_state)
             else:
                 self.props['RegistrationState'] = Variant('u', 4)
         else:
@@ -53,7 +55,10 @@ class MMModem3gppInterface(ServiceInterface):
             self.props['OperatorCode'] = Variant('s', '')
             self.props['RegistrationState'] = Variant('u', 4)
 
-        self.props['Imei'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
+        imei = (self.ofono_props['Serial'].value
+                if 'Serial' in self.ofono_props
+                else '')
+        self.props['Imei'] = Variant('s', imei)
         self.props['EnableFacilityLocks'] = Variant('u', 0)
 
         changed_props = {}
@@ -66,16 +71,22 @@ class MMModem3gppInterface(ServiceInterface):
     async def Register(self, operator_id: 's'):
         if operator_id == "":
             if 'org.ofono.NetworkRegistration' in self.ofono_interfaces:
+                network_registration = \
+                    self.ofono_interfaces['org.ofono.NetworkRegistration']
                 try:
-                    await self.ofono_interfaces['org.ofono.NetworkRegistration'].call_register()
+                    await network_registration.call_register()
                 except DBusError:
                     pass
             return
         with open('/usr/lib/ofono2mm/ofono_operator.xml', 'r') as f:
             ofono_operator_introspection = f.read()
         try:
-            ofono_operator_proxy = self.bus.get_proxy_object('org.ofono', str(self.modem_name) + "/operator/" + str(operator_id), ofono_operator_introspection)
-            ofono_operator_interface = ofono_operator_proxy.get_interface('org.ofono.NetworkOperator')
+            operator_path = f"{self.modem_name}/operator/{operator_id}"
+            ofono_operator_proxy = \
+                self.bus.get_proxy_object('org.ofono', operator_path,
+                                          ofono_operator_introspection)
+            ofono_operator_interface = \
+                ofono_operator_proxy.get_interface('org.ofono.NetworkOperator')
             await ofono_operator_interface.call_register()
         except DBusError:
             return
@@ -83,20 +94,20 @@ class MMModem3gppInterface(ServiceInterface):
     @method()
     async def Scan(self) -> 'aa{sv}':
         operators = []
-        ofono_operators = await self.ofono_interfaces['org.ofono.NetworkRegistration'].call_scan()
+        ofono_operators = \
+            await self.ofono_interfaces['org.ofono.NetworkRegistration'] \
+                      .call_scan()
         for ofono_operator in ofono_operators:
             mm_operator = {}
-            if ofono_operator[1]['Status'].value == "unknown":
-                mm_operator.update({'status': Variant('u', 0)})
-            if ofono_operator[1]['Status'].value == "available":
-                mm_operator.update({'status': Variant('u', 1)})
-            if ofono_operator[1]['Status'].value == "current":
-                mm_operator.update({'status': Variant('u', 2)})
-            if ofono_operator[1]['Status'].value == "forbidden":
-                mm_operator.update({'status': Variant('u', 3)})
+            statuses = ["unknown", "available", "current", "forbidden"]
+            ofono_operator_status = ofono_operator[1]['Status'].value
+            mm_operator_status = statuses.index(ofono_operator_status)
+            mm_operator.update({'status': Variant('u', mm_operator_status)})
             mm_operator.update({'operator-long': ofono_operator[1]['Name']})
             mm_operator.update({'operator-short': ofono_operator[1]['Name']})
-            mm_operator.update({'operator-code': Variant('s', ofono_operator[1]['MobileCountryCode'].value + ofono_operator[1]['MobileNetworkCode'].value)})
+            operator_code = f"{ofono_operator[1]['MobileCountryCode'].value}" \
+                            f"{ofono_operator[1]['MobileNetworkCode'].value}"
+            mm_operator.update({'operator-code': Variant('s', operator_code)})
             current_tech = 0
             for tech in ofono_operator[1]['Technologies'].value:
                 if tech == "lte":
@@ -105,7 +116,8 @@ class MMModem3gppInterface(ServiceInterface):
                     current_tech |= 1 << 5
                 elif tech == "gsm":
                     current_tech |= 1 << 1
-            mm_operator.update({'access-technology': Variant('u', current_tech)})
+            mm_operator.update({'access-technology':
+                                Variant('u', current_tech)})
             operators.append(mm_operator)
         return operators
 

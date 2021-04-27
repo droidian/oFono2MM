@@ -41,7 +41,8 @@ class MMInterface(ServiceInterface):
         self.ofono_modem_list = False
         while not self.ofono_modem_list:
             try:
-                self.ofono_modem_list = await self.ofono_manager_interface.call_get_modems()
+                self.ofono_modem_list = await self.ofono_manager_interface \
+                                                  .call_get_modems()
             except DBusError:
                 pass
 
@@ -51,26 +52,32 @@ class MMInterface(ServiceInterface):
         i = 0
 
         for modem in self.ofono_modem_list:
-            ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0], ofono_modem_introspection)
-            mm_modem_interface = MMModemInterface(loop, i, self.bus, ofono_proxy, modem[0])
+            ofono_proxy = self.bus.get_proxy_object('org.ofono', modem[0],
+                                                    ofono_modem_introspection)
+            mm_modem_interface = MMModemInterface(loop, i, self.bus,
+                                                  ofono_proxy, modem[0])
             ofono_modem_props = False
             while not ofono_modem_props:
                 try:
-                    ofono_modem_interface = ofono_proxy.get_interface('org.ofono.Modem')
-                    ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
-                    ofono_modem_props = await ofono_modem_interface.call_get_properties()
+                    ofono_modem_interface = \
+                        ofono_proxy.get_interface('org.ofono.Modem')
+                    ofono_modem_interface \
+                        .on_property_changed(mm_modem_interface.ofono_changed)
+                    ofono_modem_props = \
+                        await ofono_modem_interface.call_get_properties()
                 except DBusError:
                     pass
             mm_modem_interface.ofono_modem = ofono_modem_interface
             mm_modem_interface.ofono_props = ofono_modem_props
             await mm_modem_interface.init_ofono_interfaces()
-            self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(i), mm_modem_interface)
+            mm_modem_path = f"/org/freedesktop/ModemManager1/Modem/{i}"
+            self.bus.export(mm_modem_path, mm_modem_interface)
             mm_modem_interface.set_props()
             await mm_modem_interface.init_mm_sim_interface()
             await mm_modem_interface.init_mm_3gpp_interface()
             await mm_modem_interface.init_mm_messaging_interface()
             self.mm_modem_interfaces.append(mm_modem_interface)
-            self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(i))
+            self.mm_modem_objects.append(mm_modem_path)
             i += 1
 
         if not has_bus and len(self.mm_modem_objects) != 0:
@@ -103,16 +110,20 @@ async def main(loop):
     ofono_manager_interface = False
     while not ofono_manager_interface:
         try:
-            ofono_proxy = bus.get_proxy_object('org.ofono', '/', ofono_introspection)
-            ofono_manager_interface = ofono_proxy.get_interface('org.ofono.Manager')
+            ofono_proxy = bus.get_proxy_object('org.ofono', '/',
+                                               ofono_introspection)
+            ofono_manager_interface = \
+                ofono_proxy.get_interface('org.ofono.Manager')
         except DBusError:
             pass
 
     mm_manager_interface = MMInterface(loop, bus, ofono_manager_interface)
     bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
     await mm_manager_interface.find_ofono_modems()
-    ofono_manager_interface.on_modem_added(mm_manager_interface.ofono_modem_added)
-    ofono_manager_interface.on_modem_removed(mm_manager_interface.ofono_modem_removed)
+    ofono_manager_interface \
+        .on_modem_added(mm_manager_interface.ofono_modem_added)
+    ofono_manager_interface \
+        .on_modem_removed(mm_manager_interface.ofono_modem_removed)
 
     await bus.wait_for_disconnect()
 
