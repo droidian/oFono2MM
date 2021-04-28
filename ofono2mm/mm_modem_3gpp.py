@@ -71,10 +71,9 @@ class MMModem3gppInterface(ServiceInterface):
     async def Register(self, operator_id: 's'):
         if operator_id == "":
             if 'org.ofono.NetworkRegistration' in self.ofono_interfaces:
-                network_registration = \
-                    self.ofono_interfaces['org.ofono.NetworkRegistration']
+                prop = 'org.ofono.NetworkRegistration'
                 try:
-                    await network_registration.call_register()
+                    await self.ofono_interfaces[prop].call_register()
                 except DBusError:
                     pass
             return
@@ -94,9 +93,9 @@ class MMModem3gppInterface(ServiceInterface):
     @method()
     async def Scan(self) -> 'aa{sv}':
         operators = []
-        ofono_operators = \
-            await self.ofono_interfaces['org.ofono.NetworkRegistration'] \
-                      .call_scan()
+        ofono_operators = (await self
+                           .ofono_interfaces['org.ofono.NetworkRegistration']
+                           .call_scan())
         for ofono_operator in ofono_operators:
             mm_operator = {}
             statuses = ["unknown", "available", "current", "forbidden"]

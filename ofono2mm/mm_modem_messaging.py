@@ -41,10 +41,11 @@ class MMModemMessagingInterface(ServiceInterface):
 
     def add_incoming_message(self, msg, props):
         global message_i
-        mm_sms_interface = \
-            MMSmsInterface(self.index, self.bus, self.ofono_proxy,
-                           self.modem_name, self.ofono_modem, self.ofono_props,
-                           self.ofono_interfaces, self.ofono_interface_props)
+        mm_sms_interface = MMSmsInterface(self.index, self.bus,
+                                          self.ofono_proxy, self.modem_name,
+                                          self.ofono_modem, self.ofono_props,
+                                          self.ofono_interfaces,
+                                          self.ofono_interface_props)
         mm_sms_interface.props.update({
             'State': Variant('u', 3),
             'PduType': Variant('u', 1),
@@ -78,10 +79,11 @@ class MMModemMessagingInterface(ServiceInterface):
         global message_i
         if 'number' not in properties or 'text' not in properties:
             return
-        mm_sms_interface = \
-            MMSmsInterface(self.index, self.bus, self.ofono_proxy,
-                           self.modem_name, self.ofono_modem, self.ofono_props,
-                           self.ofono_interfaces, self.ofono_interface_props)
+        mm_sms_interface = MMSmsInterface(self.index, self.bus,
+                                          self.ofono_proxy, self.modem_name,
+                                          self.ofono_modem, self.ofono_props,
+                                          self.ofono_interfaces,
+                                          self.ofono_interface_props)
         request = (properties['delivery-report-request']
                    if 'delivery-report-request' in properties
                    else Variant('b', False))
@@ -99,10 +101,10 @@ class MMModemMessagingInterface(ServiceInterface):
         self.Added(msg_path, True)
         message_i += 1
         if 'org.ofono.MessageManager' in self.ofono_interfaces:
-            ofono_sms_path = \
-                await self.ofono_interfaces['org.ofono.MessageManager'] \
-                          .call_send_message(properties['number'].value,
-                                             properties['text'].value)
+            ofono_sms_path = (await self
+                              .ofono_interfaces['org.ofono.MessageManager']
+                              .call_send_message(properties['number'].value,
+                                                 properties['text'].value))
 
     @signal()
     def Added(self, path, received) -> 'ob':

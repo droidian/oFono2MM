@@ -46,8 +46,8 @@ class MMSimInterface(ServiceInterface):
             self.props['IMSI'] = Variant('s', '')
 
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
-            network_registration = \
-                self.ofono_interface_props['org.ofono.NetworkRegistration']
+            prop = 'org.ofono.NetworkRegistration'
+            network_registration = self.ofono_interface_props[prop]
             name = (network_registration['Name'].value
                     if 'Name' in network_registration
                     else '')
@@ -67,30 +67,30 @@ class MMSimInterface(ServiceInterface):
     @method()
     async def SendPin(self, pin: 's'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
-            await self.ofono_interfaces['org.ofono.SimManager'] \
-                      .call_enter_pin('pin', pin)
+            await (self.ofono_interfaces['org.ofono.SimManager']
+                   .call_enter_pin('pin', pin))
 
     @method()
     async def SendPuk(self, puk: 's', pin: 's'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
-            await self.ofono_interfaces['org.ofono.SimManager'] \
-                      .call_reset_pin('pin', puk, pin)
+            await (self.ofono_interfaces['org.ofono.SimManager']
+                   .call_reset_pin('pin', puk, pin))
 
     @method()
     async def EnablePin(self, pin: 's', enabled: 'b'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
             if enabled:
-                await self.ofono_interfaces['org.ofono.SimManager'] \
-                          .call_lock_pin('pin', pin)
+                await (self.ofono_interfaces['org.ofono.SimManager']
+                       .call_lock_pin('pin', pin))
             else:
-                await self.ofono_interfaces['org.ofono.SimManager'] \
-                          .call_unlock_pin('pin', pin)
+                await (self.ofono_interfaces['org.ofono.SimManager']
+                       .call_unlock_pin('pin', pin))
 
     @method()
     async def ChangePin(self, old_pin: 's', new_pin: 's'):
         if 'org.ofono.SimManager' in self.ofono_interfaces:
-            await self.ofono_interfaces['org.ofono.SimManager'] \
-                      .call_change_pin('pin', old_pin, new_pin)
+            await (self.ofono_interfaces['org.ofono.SimManager']
+                   .call_change_pin('pin', old_pin, new_pin))
 
     @dbus_property(access=PropertyAccess.READ)
     def Active(self) -> 'b':

@@ -124,10 +124,13 @@ class MMModemInterface(ServiceInterface):
             self.mm_sim_interface.set_props()
 
     async def init_mm_sim_interface(self):
-        self.mm_sim_interface = \
-            MMSimInterface(self.index, self.bus, self.ofono_proxy,
-                           self.modem_name, self.ofono_modem, self.ofono_props,
-                           self.ofono_interfaces, self.ofono_interface_props)
+        self.mm_sim_interface = MMSimInterface(self.index, self.bus,
+                                               self.ofono_proxy,
+                                               self.modem_name,
+                                               self.ofono_modem,
+                                               self.ofono_props,
+                                               self.ofono_interfaces,
+                                               self.ofono_interface_props)
         sim_path = f"/org/freedesktop/ModemManager/SIM/{self.index}"
         self.bus.export(sim_path, self.mm_sim_interface)
         self.mm_sim_interface.set_props()
@@ -169,8 +172,8 @@ class MMModemInterface(ServiceInterface):
                     if sim_manager['PinRequired'].value == 'none':
                         self.props['UnlockRequired'] = Variant('u', 1)
                         if self.ofono_props['Online'].value:
-                            if 'org.ofono.NetworkRegistration' \
-                                    in self.ofono_interface_props:
+                            if ('org.ofono.NetworkRegistration'
+                                    in self.ofono_interface_props):
                                 prop = 'org.ofono.NetworkRegistration'
                                 network_registration = \
                                     self.ofono_interface_props[prop]
@@ -217,11 +220,12 @@ class MMModemInterface(ServiceInterface):
                                 [network_registration['Strength'].value,
                                  True])
                 if "Technology" in network_registration:
-                    if network_registration["Technology"].value == "lte":
+                    technology = network_registration["Technology"].value
+                    if technology == "lte":
                         current_tech |= 1 << 14
-                    elif network_registration["Technology"].value == "umts":
+                    elif technology == "umts":
                         current_tech |= 1 << 5
-                    elif network_registration["Technology"].value == "gsm":
+                    elif technology == "gsm":
                         current_tech |= 1 << 1
             else:
                 self.props['SignalQuality'] = Variant('(ub)', [0, False])
@@ -238,8 +242,8 @@ class MMModemInterface(ServiceInterface):
         modes = 0
         pref = 0
         if 'org.ofono.RadioSettings' in self.ofono_interface_props:
-            radio_settings = \
-                self.ofono_interface_props['org.ofono.RadioSettings']
+            prop = 'org.ofono.RadioSettings'
+            radio_settings = self.ofono_interface_props[prop]
             if 'AvailableTechnologies' in radio_settings:
                 ofono_techs = radio_settings['AvailableTechnologies'].value
                 if 'gsm' in ofono_techs:
@@ -370,26 +374,26 @@ class MMModemInterface(ServiceInterface):
     async def SetCurrentModes(self, modes: '(uu)'):
         if modes in self.props['SupportedModes'].value:
             if modes[1] == 8:
-                await self.ofono_interfaces['org.ofono.RadioSettings'] \
-                    .call_set_property('TechnologyPreference',
-                                       Variant('s', 'lte'))
+                await (self.ofono_interfaces['org.ofono.RadioSettings']
+                       .call_set_property('TechnologyPreference',
+                                          Variant('s', 'lte')))
             elif modes[1] == 4:
-                await self.ofono_interfaces['org.ofono.RadioSettings'] \
-                    .call_set_property('TechnologyPreference',
-                                       Variant('s', 'umts'))
+                await (self.ofono_interfaces['org.ofono.RadioSettings']
+                       .call_set_property('TechnologyPreference',
+                                          Variant('s', 'umts')))
             elif modes[1] == 0:
                 if modes[0] | 2:
-                    await self.ofono_interfaces['org.ofono.RadioSettings'] \
-                        .call_set_property('TechnologyPreference',
-                                           Variant('s', 'gsm'))
+                    await (self.ofono_interfaces['org.ofono.RadioSettings']
+                           .call_set_property('TechnologyPreference',
+                                              Variant('s', 'gsm'))
                 elif modes[0] | 4:
-                    await self.ofono_interfaces['org.ofono.RadioSettings'] \
-                        .call_set_property('TechnologyPreference',
-                                           Variant('s', 'umts'))
+                    await (self.ofono_interfaces['org.ofono.RadioSettings']
+                           .call_set_property('TechnologyPreference',
+                                              Variant('s', 'umts')))
                 elif modes[0] | 8:
-                    await self.ofono_interfaces['org.ofono.RadioSettings'] \
-                        .call_set_property('TechnologyPreference',
-                                           Variant('s', 'lte'))
+                    await (self.ofono_interfaces['org.ofono.RadioSettings']
+                           .call_set_property('TechnologyPreference',
+                                              Variant('s', 'lte')))
         self.set_props()
 
     @method()
