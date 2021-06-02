@@ -6,6 +6,9 @@ from dbus_next import Variant, DBusError, BusType
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_sim import MMSimInterface
+from ofono2mm.mm_bearer import MMBearerInterface
+
+bearer_i = 1
 
 class MMModemInterface(ServiceInterface):
     def __init__(self, loop, index, bus, ofono_proxy, modem_name):
@@ -285,11 +288,23 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def CreateBearer(self, properties: 'a{sv}') -> 'o':
-        return '/'
+        global bearer_i
+        mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        mm_bearer_interface.props.update({
+            "Properties": Variant('a{sv}', properties)
+        })
+        self.bus.export('/org/freedesktop/ModemManager1/Bearer/' + str(bearer_i), mm_bearer_interface)
+        self.props['Bearers'].value.append('/org/freedesktop/ModemManager1/Bearer/' + str(bearer_i))
+        self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
+        bearer_i += 1
+        return '/org/freedesktop/ModemManager1/Bearer/' + str(bearer_i)
 
     @method()
     def DeleteBearer(self, bearer: 'o'):
-        pass #TODO: Do delete it!
+        if path in self.props['Bearers'].value:
+            self.props['Bearers'].value.remove(path)
+            self.bus.unexport(path)
+            self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
 
     @method()
     async def Reset(self):
