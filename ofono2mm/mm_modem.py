@@ -1,12 +1,7 @@
-from dbus_next.aio import MessageBus
 from dbus_next.service import (ServiceInterface,
                                method, dbus_property, signal)
 from dbus_next.constants import PropertyAccess
-from dbus_next.errors import DBusError
 from dbus_next import Variant, DBusError, BusType
-
-import asyncio
-import time
 
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
