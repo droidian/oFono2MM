@@ -3,4 +3,5 @@ ofono2mm /usr/lib/ofono2mm
 ofono.xml /usr/lib/ofono2mm
 ofono_modem.xml /usr/lib/ofono2mm
 ofono_operator.xml /usr/lib/ofono2mm
+ofono_context.xml /usr/lib/ofono2mm
 systemd/10-ofono2mm.conf /lib/systemd/system/ModemManager.service.d/
