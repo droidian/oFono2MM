@@ -25,6 +25,7 @@ class MMBearerInterface(ServiceInterface):
                 "Ip4Config": Variant('a{sv}', {}),
                 "Ip6Config": Variant('a{sv}', {}),
                 "IpTimeout": Variant('u', 0),
+                "BearerType": Variant('u', 1),
                 "Properties": Variant('a{sv}', {})
         }
 
@@ -51,6 +52,10 @@ class MMBearerInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def IpTimeout(self) -> 'u':
         return self.props['IpTimeout'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def BearerType(self) -> 'u':
+        return self.props['BearerType'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Properties(self) -> 'a{sv}':
