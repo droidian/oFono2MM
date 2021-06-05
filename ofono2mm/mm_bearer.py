@@ -20,7 +20,7 @@ class MMBearerInterface(ServiceInterface):
         self.ofono_interface_props = ofono_interface_props
         self.mm_modem = mm_modem
         self.props = {
-                "Interface": Variant('s', 'ccmni0'),
+                "Interface": Variant('s', ''),
                 "Connected": Variant('b', False),
                 "Suspended": Variant('b', False),
                 "Ip4Config": Variant('a{sv}', {
