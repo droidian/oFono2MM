@@ -102,7 +102,8 @@ class MMModemInterface(ServiceInterface):
         if self.mm_modem_messaging_interface and iface == "org.ofono.MessageManager":
             self.mm_modem_messaging_interface.set_props()
             await self.mm_modem_messaging_interface.init_messages()
-
+        if iface == "org.ofono.ConnectionManager":
+            await self.check_ofono_contexts()
 
     async def remove_ofono_interface(self, iface):
         if iface in self.ofono_interfaces:
@@ -189,9 +190,59 @@ class MMModemInterface(ServiceInterface):
                 self.props['Bearers'].value.append('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i))
                 self.bearers['/org/freedesktop/ModemManager/Bearer/' + str(bearer_i)] = mm_bearer_interface
                 bearer_i += 1
+
         if self.props['Bearers'].value == old_bearer_list:
             self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
-            
+
+        self.ofono_interfaces['org.ofono.ConnectionManager'].on_context_added(self.ofono_context_added)
+
+    def ofono_context_added(self, path, properties):
+        global bearer_i
+        if properties['Type'] == "internet":
+            mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props, self)
+            ip_method = 0
+            if 'Method' in properties['Settings'].value:
+                if properties['Settings'].value['Method'].value == "static":
+                    ip_method = 2
+                if properties['Settings'].value['Method'].value == "dhcp":
+                    ip_method = 3
+            ip_address = ''
+            if 'Address' in properties['Settings'].value:
+                ip_address = properties['Settings'].value['Address'].value
+            ip_dns = []
+            if 'DomainNameServers' in properties['Settings'].value:
+                ip_dns = properties['Settings'].value['DomainNameServers'].value
+            ip_gateway = ''
+            if 'Gateway' in properties['Settings'].value:
+                ip_gateway = properties['Settings'].value['Gateway'].value
+            mm_bearer_interface.props.update({
+                "Interface": properties['Settings'].value['Interface'] if 'Interface' in properties['Settings'].value else Variant('s', ''),
+                "Connected": properties['Active'],
+                "Ip4Config": Variant('a{sv}', {
+                    "method": Variant('u', ip_method),
+                    "dns1": Variant('s', ip_dns[0] if len(ip_dns) > 0 else ''),
+                    "dns2": Variant('s', ip_dns[1] if len(ip_dns) > 1 else ''),
+                    "dns3": Variant('s', ip_dns[2] if len(ip_dns) > 2 else ''),
+                    "gateway": Variant('s', ip_gateway)
+                }),
+                "Properties": Variant('a{sv}', {
+                    "apn": properties['AccessPointName']
+                })
+            })
+            if 'Interface' in properties['Settings'].value:
+                self.props['Ports'].value.append([properties['Settings'].value['Interface'].value, 2])
+                self.emit_properties_changed({'Ports': self.props['Ports'].value})
+            with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
+                ctx_introspection = f.read()
+            ofono_ctx_object = self.bus.get_proxy_object('org.ofono', path, ctx_introspection)
+            ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+            ofono_ctx_interface.on_property_changed(mm_bearer_interface.ofono_context_changed)
+            mm_bearer_interface.ofono_ctx = path
+            self.bus.export('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i), mm_bearer_interface)
+            self.props['Bearers'].value.append('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i))
+            self.bearers['/org/freedesktop/ModemManager/Bearer/' + str(bearer_i)] = mm_bearer_interface
+            bearer_i += 1
+            self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
 
     def set_props(self):
         old_props = self.props.copy()
