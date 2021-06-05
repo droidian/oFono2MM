@@ -19,6 +19,7 @@ class MMBearerInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.mm_modem = mm_modem
+        self.disconnecting = False
         self.props = {
                 "Interface": Variant('s', ''),
                 "Connected": Variant('b', False),
@@ -82,6 +83,7 @@ class MMBearerInterface(ServiceInterface):
         await self.doDisconnect()
 
     async def doDisconnect(self):
+        self.disconnecting = True
         with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
             ctx_introspection = f.read()
         ofono_ctx_object = self.bus.get_proxy_object('org.ofono', self.ofono_ctx, ctx_introspection)
@@ -92,6 +94,10 @@ class MMBearerInterface(ServiceInterface):
         if propname == "Active":
             self.props['Connected'] = value
             self.emit_properties_changed({'Connected': value.value})
+            if self.disconnecting and (not value.value):
+                self.disconnecting = False
+            elif (not value.value) and self.props['Connected'].value:
+                self.doConnect()
         if propname == "Settings":
             if 'Interface' in value.value:
                 self.props['Interface'] = value.value['Interface']
