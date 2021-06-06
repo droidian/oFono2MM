@@ -1,0 +1,4 @@
+[Allow org.freedesktop.ModemManager1 on users inside the radio group]
+Identity=unix-group:radio
+Action=org.freedesktop.ModemManager1.Device.Control;org.freedesktop.ModemManager1.Contacts;org.freedesktop.ModemManager1.Messaging;org.freedesktop.ModemManager1.Location
+ResultActive=yes
