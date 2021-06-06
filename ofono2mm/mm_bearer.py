@@ -92,12 +92,12 @@ class MMBearerInterface(ServiceInterface):
 
     def ofono_context_changed(self, propname, value):
         if propname == "Active":
-            self.props['Connected'] = value
-            self.emit_properties_changed({'Connected': value.value})
             if self.disconnecting and (not value.value):
                 self.disconnecting = False
             elif (not value.value) and self.props['Connected'].value:
                 self.doConnect()
+            self.props['Connected'] = value
+            self.emit_properties_changed({'Connected': value.value})
         if propname == "Settings":
             if 'Interface' in value.value:
                 self.props['Interface'] = value.value['Interface']
