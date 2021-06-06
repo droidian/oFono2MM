@@ -90,6 +90,14 @@ class MMBearerInterface(ServiceInterface):
         ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
         await ofono_ctx_interface.call_set_property("Active", Variant('b', False))
 
+    async def add_auth_ofono(self, username, password):
+        with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
+            ctx_introspection = f.read()
+        ofono_ctx_object = self.bus.get_proxy_object('org.ofono', self.ofono_ctx, ctx_introspection)
+        ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+        await ofono_ctx_interface.call_set_property("Username", Variant('s', username))
+        await ofono_ctx_interface.call_set_property("Password", Variant('s', password))
+
     def ofono_context_changed(self, propname, value):
         if propname == "Active":
             if self.disconnecting and (not value.value):
