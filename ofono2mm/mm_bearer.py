@@ -106,7 +106,7 @@ class MMBearerInterface(ServiceInterface):
                 self.doConnect()
             self.props['Connected'] = value
             self.emit_properties_changed({'Connected': value.value})
-        if propname == "Settings":
+        elif propname == "Settings":
             if 'Interface' in value.value:
                 self.props['Interface'] = value.value['Interface']
                 self.emit_properties_changed({'Interface': value.value['Interface'].value})

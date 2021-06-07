@@ -164,7 +164,7 @@ class MMModemInterface(ServiceInterface):
                 if 'Gateway' in ctx[1]['Settings'].value:
                     ip_gateway = ctx[1]['Settings'].value['Gateway'].value
                 mm_bearer_interface.props.update({
-                    "Interface": ctx[1]['Settings'].value['Interface'] if 'Interface' in ctx[1]['Settings'].value else Variant('s', ''),
+                    "Interface": ctx[1]['Settings'].value.get("Interface", Variant('s', '')),
                     "Connected": ctx[1]['Active'],
                     "Ip4Config": Variant('a{sv}', {
                         "method": Variant('u', ip_method),
@@ -204,7 +204,7 @@ class MMModemInterface(ServiceInterface):
             if 'Method' in properties['Settings'].value:
                 if properties['Settings'].value['Method'].value == "static":
                     ip_method = 2
-                if properties['Settings'].value['Method'].value == "dhcp":
+                elif properties['Settings'].value['Method'].value == "dhcp":
                     ip_method = 3
             ip_address = ''
             if 'Address' in properties['Settings'].value:
