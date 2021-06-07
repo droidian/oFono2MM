@@ -5,7 +5,11 @@ from dbus_next import Variant, DBusError, BusType
 
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
+from ofono2mm.mm_modem_simple import MMModemSimpleInterface
 from ofono2mm.mm_sim import MMSimInterface
+from ofono2mm.mm_bearer import MMBearerInterface
+
+bearer_i = 0
 
 class MMModemInterface(ServiceInterface):
     def __init__(self, loop, index, bus, ofono_proxy, modem_name):
@@ -23,6 +27,7 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem_messaging_interface = False
         self.mm_sim_interface = False
         self.sim = Variant('o', '/org/freedesktop/ModemManager/SIM/' + str(self.index))
+        self.bearers = {}
         self.props = {
                     'Sim': Variant('o', '/'),
                     'SimSlots': Variant('ao', ['/org/freedesktop/ModemManager/SIM/' + str(self.index)]),
@@ -30,8 +35,8 @@ class MMModemInterface(ServiceInterface):
                     'Bearers': Variant('ao', []),
                     'SupportedCapabilities': Variant('au', [0]),
                     'CurrentCapabilities': Variant('u', 0),
-                    'MaxBearers': Variant('u', 0),
-                    'MaxActiveBearers': Variant('u', 0),
+                    'MaxBearers': Variant('u', 4),
+                    'MaxActiveBearers': Variant('u', 2),
                     'Manufacturer': Variant('s', ""),
                     'Model': Variant('s', ""),
                     'Revision': Variant('s', '0'),
@@ -57,12 +62,14 @@ class MMModemInterface(ServiceInterface):
                     'CurrentModes': Variant('(uu)', [0, 0]),
                     'SupportedBands': Variant('au', []),
                     'CurrentBands': Variant('au', []),
-                    'SupportedIpFamilies': Variant('u', 0)
+                    'SupportedIpFamilies': Variant('u', 3)
                 }
 
     async def init_ofono_interfaces(self):
         for iface in self.ofono_props['Interfaces'].value:
             await self.add_ofono_interface(iface)
+                    
+        await self.check_ofono_contexts()
 
     async def add_ofono_interface(self, iface):
         self.ofono_interfaces.update({
@@ -95,7 +102,8 @@ class MMModemInterface(ServiceInterface):
         if self.mm_modem_messaging_interface and iface == "org.ofono.MessageManager":
             self.mm_modem_messaging_interface.set_props()
             await self.mm_modem_messaging_interface.init_messages()
-
+        if iface == "org.ofono.ConnectionManager":
+            await self.check_ofono_contexts()
 
     async def remove_ofono_interface(self, iface):
         if iface in self.ofono_interfaces:
@@ -120,12 +128,121 @@ class MMModemInterface(ServiceInterface):
         self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem3gpp_interface)
         self.mm_modem3gpp_interface.set_props()
 
+    async def init_mm_simple_interface(self):
+        self.mm_modem_simple_interface = MMModemSimpleInterface(self)
+        self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_simple_interface)
+
     async def init_mm_messaging_interface(self):
         self.mm_modem_messaging_interface = MMModemMessagingInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_messaging_interface)
         if 'org.ofono.MessageManager' in self.ofono_interfaces:
             self.mm_modem_messaging_interface.set_props()
             await self.mm_modem_messaging_interface.init_messages()
+
+    async def check_ofono_contexts(self):
+        global bearer_i
+        if not 'org.ofono.ConnectionManager' in self.ofono_interfaces:
+            return
+        contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts();
+        old_bearer_list = self.props['Bearers'].value
+        for ctx in contexts:
+            if ctx[1]['Type'].value == "internet":
+                mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props, self)
+                ip_method = 0
+                if 'Method' in ctx[1]['Settings'].value:
+                    if ctx[1]['Settings'].value['Method'].value == "static":
+                        ip_method = 2
+                    if ctx[1]['Settings'].value['Method'].value == "dhcp":
+                        ip_method = 3
+                ip_address = ''
+                if 'Address' in ctx[1]['Settings'].value:
+                    ip_address = ctx[1]['Settings'].value['Address'].value
+                ip_dns = []
+                if 'DomainNameServers' in ctx[1]['Settings'].value:
+                    ip_dns = ctx[1]['Settings'].value['DomainNameServers'].value
+                ip_gateway = ''
+                if 'Gateway' in ctx[1]['Settings'].value:
+                    ip_gateway = ctx[1]['Settings'].value['Gateway'].value
+                mm_bearer_interface.props.update({
+                    "Interface": ctx[1]['Settings'].value.get("Interface", Variant('s', '')),
+                    "Connected": ctx[1]['Active'],
+                    "Ip4Config": Variant('a{sv}', {
+                        "method": Variant('u', ip_method),
+                        "dns1": Variant('s', ip_dns[0] if len(ip_dns) > 0 else ''),
+                        "dns2": Variant('s', ip_dns[1] if len(ip_dns) > 1 else ''),
+                        "dns3": Variant('s', ip_dns[2] if len(ip_dns) > 2 else ''),
+                        "gateway": Variant('s', ip_gateway)
+                    }),
+                    "Properties": Variant('a{sv}', {
+                        "apn": ctx[1]['AccessPointName']
+                    })
+                })
+                if 'Interface' in ctx[1]['Settings'].value:
+                    self.props['Ports'].value.append([ctx[1]['Settings'].value['Interface'].value, 2])
+                    self.emit_properties_changed({'Ports': self.props['Ports'].value})
+                with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
+                    ctx_introspection = f.read()
+                ofono_ctx_object = self.bus.get_proxy_object('org.ofono', ctx[0], ctx_introspection)
+                ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+                ofono_ctx_interface.on_property_changed(mm_bearer_interface.ofono_context_changed)
+                mm_bearer_interface.ofono_ctx = ctx[0]
+                self.bus.export('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i), mm_bearer_interface)
+                self.props['Bearers'].value.append('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i))
+                self.bearers['/org/freedesktop/ModemManager/Bearer/' + str(bearer_i)] = mm_bearer_interface
+                bearer_i += 1
+
+        if self.props['Bearers'].value == old_bearer_list:
+            self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
+
+        self.ofono_interfaces['org.ofono.ConnectionManager'].on_context_added(self.ofono_context_added)
+
+    def ofono_context_added(self, path, properties):
+        global bearer_i
+        if properties['Type'] == "internet":
+            mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props, self)
+            ip_method = 0
+            if 'Method' in properties['Settings'].value:
+                if properties['Settings'].value['Method'].value == "static":
+                    ip_method = 2
+                elif properties['Settings'].value['Method'].value == "dhcp":
+                    ip_method = 3
+            ip_address = ''
+            if 'Address' in properties['Settings'].value:
+                ip_address = properties['Settings'].value['Address'].value
+            ip_dns = []
+            if 'DomainNameServers' in properties['Settings'].value:
+                ip_dns = properties['Settings'].value['DomainNameServers'].value
+            ip_gateway = ''
+            if 'Gateway' in properties['Settings'].value:
+                ip_gateway = properties['Settings'].value['Gateway'].value
+            mm_bearer_interface.props.update({
+                "Interface": properties['Settings'].value['Interface'] if 'Interface' in properties['Settings'].value else Variant('s', ''),
+                "Connected": properties['Active'],
+                "Ip4Config": Variant('a{sv}', {
+                    "method": Variant('u', ip_method),
+                    "dns1": Variant('s', ip_dns[0] if len(ip_dns) > 0 else ''),
+                    "dns2": Variant('s', ip_dns[1] if len(ip_dns) > 1 else ''),
+                    "dns3": Variant('s', ip_dns[2] if len(ip_dns) > 2 else ''),
+                    "gateway": Variant('s', ip_gateway)
+                }),
+                "Properties": Variant('a{sv}', {
+                    "apn": properties['AccessPointName']
+                })
+            })
+            if 'Interface' in properties['Settings'].value:
+                self.props['Ports'].value.append([properties['Settings'].value['Interface'].value, 2])
+                self.emit_properties_changed({'Ports': self.props['Ports'].value})
+            with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
+                ctx_introspection = f.read()
+            ofono_ctx_object = self.bus.get_proxy_object('org.ofono', path, ctx_introspection)
+            ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+            ofono_ctx_interface.on_property_changed(mm_bearer_interface.ofono_context_changed)
+            mm_bearer_interface.ofono_ctx = path
+            self.bus.export('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i), mm_bearer_interface)
+            self.props['Bearers'].value.append('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i))
+            self.bearers['/org/freedesktop/ModemManager/Bearer/' + str(bearer_i)] = mm_bearer_interface
+            bearer_i += 1
+            self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
 
     def set_props(self):
         old_props = self.props.copy()
@@ -284,12 +401,41 @@ class MMModemInterface(ServiceInterface):
         return self.props['Bearers'].value
 
     @method()
-    def CreateBearer(self, properties: 'a{sv}') -> 'o':
-        return '/'
+    async def CreateBearer(self, properties: 'a{sv}') -> 'o':
+        await self.doCreateBearer(properties)
+
+    async def doCreateBearer(self, properties):
+        global bearer_i
+        mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_proxy, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props, self)
+        mm_bearer_interface.props.update({
+            "Properties": Variant('a{sv}', properties)
+        })
+        ofono_ctx = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_add_context("internet")
+        with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
+            ctx_introspection = f.read()
+        ofono_ctx_object = self.bus.get_proxy_object('org.ofono', ofono_ctx, ctx_introspection)
+        ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+        if 'apn' in properties:
+            await ofono_ctx_interface.call_set_property("AccessPointName", properties['apn'])
+        await mm_bearer_interface.add_auth_ofono(properties['username'].value if 'username' in properties else '', 
+                                                        properties['password'].value if 'password' in properties else '')
+        await ofono_ctx_interface.call_set_property("Protocol", Variant('s', 'dual'))
+        mm_bearer_interface.ofono_ctx = ofono_ctx
+        self.bus.export('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i), mm_bearer_interface)
+        self.props['Bearers'].value.append('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i))
+        self.bearers['/org/freedesktop/ModemManager/Bearer/' + str(bearer_i)] = mm_bearer_interface
+        self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
+        bearer_i += 1
+        return '/org/freedesktop/ModemManager/Bearer/' + str(bearer_i)
 
     @method()
-    def DeleteBearer(self, bearer: 'o'):
-        pass #TODO: Do delete it!
+    async def DeleteBearer(self, path: 'o'):
+        if path in self.props['Bearers'].value:
+            self.props['Bearers'].value.remove(path)
+            await self.ofono_interfaces['org.ofono.ConnectionManager'].call_remove_context(self.bearers[path].ofono_ctx)
+            self.bearers.pop(path)
+            self.bus.unexport(path)
+            self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
 
     @method()
     async def Reset(self):
