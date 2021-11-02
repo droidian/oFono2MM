@@ -26,6 +26,7 @@ class MMBearerInterface(ServiceInterface):
         self.ofono_interface_props = ofono_interface_props
         self.mm_modem = mm_modem
         self.disconnecting = False
+        self.reconnect_task = None
         self.props = {
                 "Interface": Variant('s', ''),
                 "Connected": Variant('b', False),
@@ -79,15 +80,34 @@ class MMBearerInterface(ServiceInterface):
 
     @async_retryable()
     async def doConnect(self):
+        print("Do connect")
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
+
+        # Clear the reconnection task
+        self.reconnect_task = None
 
     @method()
     async def Disconnect(self):
         await self.doDisconnect()
 
+    async def cancel_reconnect_task(self):
+        if self.reconnect_task is not None:
+            self.reconnect_task.cancel()
+            try:
+                await self.reconnect_task
+            except asyncio.CancelledError:
+                # Finally
+                pass
+            finally:
+                self.reconnect_task = None
+
     async def doDisconnect(self):
         self.disconnecting = True
+
+        # Cancel an eventual reconnection task
+        await self.cancel_reconect_task()
+
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', False))
 
@@ -100,8 +120,8 @@ class MMBearerInterface(ServiceInterface):
         if propname == "Active":
             if self.disconnecting and (not value.value):
                 self.disconnecting = False
-            elif (not value.value) and self.props['Connected'].value:
-                self.doConnect()
+            elif not self.disconnecting and (not value.value) and self.reconnect_task is None and self.props['Connected'].value:
+                self.reconnect_task = asyncio.create_task(self.doConnect())
             self.props['Connected'] = value
             self.emit_properties_changed({'Connected': value.value})
         elif propname == "Settings":
