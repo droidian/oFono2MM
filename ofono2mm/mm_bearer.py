@@ -7,12 +7,18 @@ from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_sim import MMSimInterface
 
+from ofono2mm.utils import async_retryable
+
+import asyncio
+
 class MMBearerInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props, mm_modem):
+    def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props, mm_modem):
         super().__init__('org.freedesktop.ModemManager1.Bearer')
+        print("Creating new bearer interface for %i", index)
         self.index = index
         self.bus = bus
-        self.ofono_proxy = ofono_proxy
+        self.ofono_client = ofono_client
+        self.ofono_proxy = self.ofono_client["ofono_modem"][modem_name]
         self.modem_name = modem_name
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
@@ -72,10 +78,7 @@ class MMBearerInterface(ServiceInterface):
         await self.doConnect()
 
     async def doConnect(self):
-        with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
-            ctx_introspection = f.read()
-        ofono_ctx_object = self.bus.get_proxy_object('org.ofono', self.ofono_ctx, ctx_introspection)
-        ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+        ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
 
     @method()
@@ -84,17 +87,11 @@ class MMBearerInterface(ServiceInterface):
 
     async def doDisconnect(self):
         self.disconnecting = True
-        with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
-            ctx_introspection = f.read()
-        ofono_ctx_object = self.bus.get_proxy_object('org.ofono', self.ofono_ctx, ctx_introspection)
-        ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+        ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', False))
 
     async def add_auth_ofono(self, username, password):
-        with open('/usr/lib/ofono2mm/ofono_context.xml', 'r') as f:
-            ctx_introspection = f.read()
-        ofono_ctx_object = self.bus.get_proxy_object('org.ofono', self.ofono_ctx, ctx_introspection)
-        ofono_ctx_interface = ofono_ctx_object.get_interface('org.ofono.ConnectionContext')
+        ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Username", Variant('s', username))
         await ofono_ctx_interface.call_set_property("Password", Variant('s', password))
 
