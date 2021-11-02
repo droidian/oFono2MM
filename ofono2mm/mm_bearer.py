@@ -77,6 +77,7 @@ class MMBearerInterface(ServiceInterface):
     async def Connect(self):
         await self.doConnect()
 
+    @async_retryable()
     async def doConnect(self):
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
