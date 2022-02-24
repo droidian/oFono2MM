@@ -214,4 +214,13 @@
 </method><method name="RegisterAgent"><arg name="path" type="o" direction="in"/>
 <arg name="period" type="u" direction="in"/>
 </method><method name="UnregisterAgent"><arg name="agent" type="o" direction="in"/>
-</method></interface><node name="cell_42"/><node name="cell_44"/><node name="context1"/><node name="context2"/><node name="context3"/><node name="operator"/></node>
+</method></interface>
+<interface name="org.ofono.SimAuthentication">
+	<method name="GetApplications">
+		<arg name="applications" type="a{oa{sv}}" direction="out" />
+	</method>
+	<method name="GetProperties">
+		<arg name="properties" type="a{sv}" direction="out" />
+	</method>
+</interface>
+<node name="cell_42"/><node name="cell_44"/><node name="context1"/><node name="context2"/><node name="context3"/><node name="operator"/></node>

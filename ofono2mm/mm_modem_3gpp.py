@@ -4,11 +4,12 @@ from dbus_next.constants import PropertyAccess
 from dbus_next import Variant, DBusError
 
 class MMModem3gppInterface(ServiceInterface):
-    def __init__(self, index, bus, ofono_proxy, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
+    def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Modem.Modem3gpp')
         self.index = index
         self.bus = bus
-        self.ofono_proxy = ofono_proxy
+        self.ofono_client = ofono_client
+        self.ofono_proxy = self.ofono_client["ofono_modem"][modem_name]
         self.modem_name = modem_name
         self.ofono_modem = ofono_modem
         self.ofono_props = ofono_props
@@ -70,11 +71,8 @@ class MMModem3gppInterface(ServiceInterface):
                 except DBusError:
                     pass
             return
-        with open('/usr/lib/ofono2mm/ofono_operator.xml', 'r') as f:
-            ofono_operator_introspection = f.read()
         try:
-            ofono_operator_proxy = self.bus.get_proxy_object('org.ofono', str(self.modem_name) + "/operator/" + str(operator_id), ofono_operator_introspection)
-            ofono_operator_interface = ofono_operator_proxy.get_interface('org.ofono.NetworkOperator')
+            ofono_operator_interface = self.ofono_client["ofono_operator"][str(self.modem_name) + "/operator/" + str(operator_id)]['org.ofono.NetworkOperator']
             await ofono_operator_interface.call_register()
         except DBusError:
             return
