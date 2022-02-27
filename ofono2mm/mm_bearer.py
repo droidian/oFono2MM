@@ -106,7 +106,7 @@ class MMBearerInterface(ServiceInterface):
         self.disconnecting = True
 
         # Cancel an eventual reconnection task
-        await self.cancel_reconect_task()
+        await self.cancel_reconnect_task()
 
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', False))
