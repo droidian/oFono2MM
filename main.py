@@ -48,7 +48,7 @@ class MMInterface(ServiceInterface):
         i = 0
 
         for modem in self.ofono_modem_list:
-            mm_modem_interface = MMModemInterface(loop, i, self.bus, self.ofono_client, modem[0])
+            mm_modem_interface = MMModemInterface(self.loop, i, self.bus, self.ofono_client, modem[0])
             ofono_modem_props = False
             while not ofono_modem_props:
                 try:
@@ -92,7 +92,7 @@ class MMInterface(ServiceInterface):
     def InhibitDevice(self, uid: 's', inhibit: 'b'):
         pass
 
-async def main(loop):
+async def main():
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
     ofono_client = Ofono(bus)
     ofono_manager_interface = False
@@ -101,7 +101,8 @@ async def main(loop):
             ofono_manager_interface = ofono_client["ofono"]["/"]["org.ofono.Manager"]
         except DBusError:
             pass
-
+    
+    loop = asyncio.get_running_loop()
     mm_manager_interface = MMInterface(loop, bus, ofono_client)
     bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
     await mm_manager_interface.find_ofono_modems()
@@ -110,5 +111,5 @@ async def main(loop):
 
     await bus.wait_for_disconnect()
 
-loop = asyncio.get_event_loop()
-loop.run_until_complete(main(loop))
+asyncio.run(main())
+
