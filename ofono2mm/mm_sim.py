@@ -45,7 +45,7 @@ class MMSimInterface(ServiceInterface):
             else:
                 self.props['IMSI'] = Variant('s', '')
         else:
-            self.props['Active'] = False
+            self.props['Active'] = Variant('b', False)
             self.props['SimIdentifier'] = Variant('s', '')
             self.props['IMSI'] = Variant('s', '')
 
