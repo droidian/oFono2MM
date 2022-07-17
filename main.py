@@ -8,6 +8,7 @@ from dbus_next import DBusError, BusType
 import asyncio
 
 from ofono2mm import MMModemInterface, Ofono
+from ofono2mm.utils import async_locked
 
 has_bus = False
 
@@ -29,6 +30,7 @@ class MMInterface(ServiceInterface):
     async def ScanDevices(self):
         await self.find_ofono_modems()
 
+    @async_locked
     async def find_ofono_modems(self):
         global has_bus
 
