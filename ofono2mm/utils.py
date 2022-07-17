@@ -34,3 +34,10 @@ def async_retryable(times=0):
 
     return decorator
 
+def async_locked(func):
+    async def wrapper(*args, **kwargs):
+        async with func.__lock:
+            return await func(*args, **kwargs)
+
+    func.__lock = asyncio.Lock()
+    return wrapper
