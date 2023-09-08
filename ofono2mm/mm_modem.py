@@ -20,7 +20,7 @@ class MMModemInterface(ServiceInterface):
         self.ofono_client = ofono_client
         self.ofono_proxy = self.ofono_client["ofono_modem"][modem_name]
         self.modem_name = modem_name
-        self.ofono_modem = None
+        self.ofono_modem = self.ofono_proxy['org.ofono.Modem']
         self.ofono_props = {}
         self.ofono_interfaces = {}
         self.ofono_interface_props = {}
