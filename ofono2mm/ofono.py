@@ -88,3 +88,10 @@ class Ofono(CachedClient):
         'ofono_modem' : '/usr/lib/ofono2mm/ofono_modem.xml',
         'ofono_operator' : '/usr/lib/ofono2mm/ofono_operator.xml',
     }
+
+class DBus(CachedClient):
+
+    bus_name = "org.freedesktop.DBus"
+    introspections = {
+        "dbus" : '/usr/lib/ofono2mm/dbus.xml',
+    }
