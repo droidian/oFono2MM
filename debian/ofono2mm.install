@@ -1,6 +1,5 @@
 main.py /usr/lib/ofono2mm
 ofono2mm /usr/lib/ofono2mm
-dbus.xml /usr/lib/ofono2mm
 ofono.xml /usr/lib/ofono2mm
 ofono_modem.xml /usr/lib/ofono2mm
 ofono_operator.xml /usr/lib/ofono2mm

@@ -7,21 +7,20 @@ from dbus_next import DBusError, BusType
 
 import asyncio
 
-from ofono2mm import MMModemInterface, Ofono, DBus
+from ofono2mm import MMModemInterface, Ofono
 from ofono2mm.utils import async_locked
 
 has_bus = False
 
 class MMInterface(ServiceInterface):
-    def __init__(self, loop, bus):
+    def __init__(self, loop, bus, ofono_client):
         super().__init__('org.freedesktop.ModemManager1')
         self.loop = loop
         self.bus = bus
-        self.ofono_client = Ofono(bus)
-        self.dbus_client = DBus(bus)
+        self.ofono_client = ofono_client
+        self.ofono_manager_interface = self.ofono_client["ofono"]["/"]["org.ofono.Manager"]
         self.mm_modem_interfaces = []
         self.mm_modem_objects = []
-        self.loop.create_task(self.check_ofono_presence())
 
     @dbus_property(access=PropertyAccess.READ)
     def Version(self) -> 's':
@@ -30,24 +29,6 @@ class MMInterface(ServiceInterface):
     @method()
     async def ScanDevices(self):
         await self.find_ofono_modems()
-
-    async def check_ofono_presence(self):
-        dbus_iface = self.dbus_client["dbus"]["/org/freedesktop/DBus"]["org.freedesktop.DBus"]
-        dbus_iface.on_name_owner_changed(self.dbus_name_owner_changed)
-        has_ofono = await dbus_iface.call_name_has_owner("org.ofono")
-        if has_ofono:
-            self.ofono_added()
-        else:
-            self.ofono_removed()
-
-    def ofono_added(self):
-        self.ofono_manager_interface = self.ofono_client["ofono"]["/"]["org.ofono.Manager"]
-        self.ofono_manager_interface.on_modem_added(self.ofono_modem_added)
-        self.ofono_manager_interface.on_modem_removed(self.ofono_modem_removed)
-        self.loop.create_task(self.find_ofono_modems())
-
-    def ofono_removed(self):
-        self.ofono_manager_interface = None
 
     @async_locked
     async def find_ofono_modems(self):
@@ -59,9 +40,6 @@ class MMInterface(ServiceInterface):
         self.mm_modem_objects = []
         self.mm_modem_intefaces = []
 
-        if not self.ofono_manager_interface:
-            return
-
         self.ofono_modem_list = False
         while not self.ofono_modem_list:
             try:
@@ -72,23 +50,13 @@ class MMInterface(ServiceInterface):
         self.i = 0
 
         for modem in self.ofono_modem_list:
-            await self.export_new_modem(modem[0], modem[1])
+            await self.ofono_modem_added(modem[0], modem[1])
 
         if not has_bus and len(self.mm_modem_objects) != 0:
             await self.bus.request_name('org.freedesktop.ModemManager1')
             has_bus = True
 
-    def dbus_name_owner_changed(self, name, old_owner, new_owner):
-        if name == "org.ofono":
-            if new_owner == "":
-                self.ofono_removed()
-            elif old_owner == "":
-                self.ofono_added()
-
-    def ofono_modem_added(self, path, mprops):
-        self.loop.create_task(self.export_new_modem(path, props))
-
-    async def export_new_modem(self, path, mprops):
+    async def ofono_modem_added(self, path, mprops):
         mm_modem_interface = MMModemInterface(self.loop, self.i, self.bus, self.ofono_client, path)
         mm_modem_interface.ofono_props = mprops
         self.ofono_client["ofono_modem"][path]['org.ofono.Modem'].on_property_changed(mm_modem_interface.ofono_changed)
@@ -103,7 +71,7 @@ class MMInterface(ServiceInterface):
         self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(self.i))
         self.i += 1
 
-    def ofono_modem_removed(self, path):
+    async def ofono_modem_removed(self, path):
         for mm_object in self.mm_modem_objects:
             if mm_object.modem_name == path:
                 self.bus.unexport(mm_object)
@@ -122,9 +90,21 @@ class MMInterface(ServiceInterface):
 
 async def main():
     bus = await MessageBus(bus_type=BusType.SYSTEM).connect()
+    ofono_client = Ofono(bus)
+    ofono_manager_interface = False
+    while not ofono_manager_interface:
+        try:
+            ofono_manager_interface = ofono_client["ofono"]["/"]["org.ofono.Manager"]
+        except DBusError:
+            pass
+    
     loop = asyncio.get_running_loop()
-    mm_manager_interface = MMInterface(loop, bus)
+    mm_manager_interface = MMInterface(loop, bus, ofono_client)
     bus.export('/org/freedesktop/ModemManager1', mm_manager_interface)
+    await mm_manager_interface.find_ofono_modems()
+    ofono_manager_interface.on_modem_added(mm_manager_interface.ofono_modem_added)
+    ofono_manager_interface.on_modem_removed(mm_manager_interface.ofono_modem_removed)
+
     await bus.wait_for_disconnect()
 
 asyncio.run(main())
