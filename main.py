@@ -65,7 +65,11 @@ class MMInterface(ServiceInterface):
         self.ofono_modem_list = False
         while not self.ofono_modem_list:
             try:
-                self.ofono_modem_list = await self.ofono_manager_interface.call_get_modems()
+                self.ofono_modem_list = [
+                    x
+                    for x in await self.ofono_manager_interface.call_get_modems()
+                    if x[0].startswith("/ril_") # FIXME
+                ]
             except DBusError:
                 pass
 
