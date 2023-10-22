@@ -47,34 +47,40 @@ class MMInterface(ServiceInterface):
             except DBusError:
                 pass
 
-        self.i = 0
+        i = 0
 
         for modem in self.ofono_modem_list:
-            await self.ofono_modem_added(modem[0], modem[1])
+            mm_modem_interface = MMModemInterface(self.loop, i, self.bus, self.ofono_client, modem[0])
+            ofono_modem_props = False
+            while not ofono_modem_props:
+                try:
+                    ofono_modem_interface = self.ofono_client["ofono_modem"][modem[0]]['org.ofono.Modem']
+                    ofono_modem_interface.on_property_changed(mm_modem_interface.ofono_changed)
+                    ofono_modem_props = await ofono_modem_interface.call_get_properties()
+                except DBusError:
+                    pass
+            mm_modem_interface.ofono_modem = ofono_modem_interface
+            mm_modem_interface.ofono_props = ofono_modem_props
+            await mm_modem_interface.init_ofono_interfaces()
+            self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(i), mm_modem_interface)
+            mm_modem_interface.set_props()
+            await mm_modem_interface.init_mm_sim_interface()
+            await mm_modem_interface.init_mm_3gpp_interface()
+            await mm_modem_interface.init_mm_messaging_interface()
+            await mm_modem_interface.init_mm_simple_interface()
+            self.mm_modem_interfaces.append(mm_modem_interface)
+            self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(i))
+            i += 1
 
         if not has_bus and len(self.mm_modem_objects) != 0:
             await self.bus.request_name('org.freedesktop.ModemManager1')
             has_bus = True
 
-    async def ofono_modem_added(self, path, mprops):
-        mm_modem_interface = MMModemInterface(self.loop, self.i, self.bus, self.ofono_client, path)
-        mm_modem_interface.ofono_props = mprops
-        self.ofono_client["ofono_modem"][path]['org.ofono.Modem'].on_property_changed(mm_modem_interface.ofono_changed)
-        await mm_modem_interface.init_ofono_interfaces()
-        self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.i), mm_modem_interface)
-        mm_modem_interface.set_props()
-        await mm_modem_interface.init_mm_sim_interface()
-        await mm_modem_interface.init_mm_3gpp_interface()
-        await mm_modem_interface.init_mm_messaging_interface()
-        await mm_modem_interface.init_mm_simple_interface()
-        self.mm_modem_interfaces.append(mm_modem_interface)
-        self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(self.i))
-        self.i += 1
+    def ofono_modem_added(self, path, mprops):
+       self.loop.create_task(self.find_ofono_modems())
 
-    async def ofono_modem_removed(self, path):
-        for mm_object in self.mm_modem_objects:
-            if mm_object.modem_name == path:
-                self.bus.unexport(mm_object)
+    def ofono_modem_removed(self, path):
+       self.loop.create_task(self.find_ofono_modems())
 
     @method()
     def SetLogging(self, level: 's'):
