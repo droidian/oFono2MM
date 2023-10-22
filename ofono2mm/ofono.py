@@ -62,6 +62,11 @@ class CachedClient:
 
             self.cache[interface_hashed] = self.cache[path_hashed].get_interface(interface)
 
+            try:
+                self.cache[interface_hashed] = self.cache[path_hashed].get_interface(interface)
+            except Exception as e:
+                self.cache[interface_hashed] = None  # skip over org.ofono.IpMultimediaSystem
+
         return self.cache[interface_hashed]
 
     def __getitem__(self, introspection):
