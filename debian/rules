@@ -1,4 +1,11 @@
 #!/usr/bin/make -f
 
+# Do nothing for the build and clean steps
+build:
+clean:
+
 %:
 	dh $@ --with=python3
+
+# Override dh_auto_install to do nothing, letting debian/*.install handle files
+override_dh_auto_install:
