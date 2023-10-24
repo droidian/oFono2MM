@@ -1,7 +1,7 @@
 PREFIX ?= /usr
-LIBDIR = $(PREFIX)/lib
-BINDIR = $(PREFIX)/bin
-SYSDIR = /lib/systemd/system
+LIBDIR ?= $(PREFIX)/lib
+BINDIR ?= $(PREFIX)/bin
+SYSTEMD_DIR = /usr/lib/systemd/system
 POLKIT_DIR = /etc/polkit-1/localauthority/10-vendor.d
 
 MAIN = main.py
@@ -27,11 +27,15 @@ install:
 	install -m 644 $(DBUS_XML) $(LIBDIR)/ofono2mm/
 	install -m 644 $(OFONO_XML_FILES) $(LIBDIR)/ofono2mm/
 
-	install -d $(SYSDIR)/ModemManager.service.d
-	install -m 644 $(SYSTEMD_CONF) $(SYSDIR)/ModemManager.service.d/
+ifeq ($(shell test -d $(SYSTEMD_DIR) && echo 1),1)
+	install -d $(SYSTEMD_DIR)/ModemManager.service.d
+	install -m 644 $(SYSTEMD_CONF) $(SYSTEMD_DIR)/ModemManager.service.d/
+endif
 
+ifeq ($(shell test -d $(POLKIT_DIR) && echo 1),1)
 	install -d $(POLKIT_DIR)
 	install -m 644 $(POLKIT_PKLA) $(POLKIT_DIR)/
+endif
 
 uninstall:
 	rm -rf $(LIBDIR)/ofono2mm/
