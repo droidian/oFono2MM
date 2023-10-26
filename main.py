@@ -1,4 +1,5 @@
 #!/usr/bin/env python3
+
 from dbus_next.aio import MessageBus
 from dbus_next.service import (ServiceInterface,
                                method, dbus_property)
@@ -25,7 +26,7 @@ class MMInterface(ServiceInterface):
 
     @dbus_property(access=PropertyAccess.READ)
     def Version(self) -> 's':
-        return '1.14.10'
+        return '1.22.0'
 
     @method()
     async def ScanDevices(self):
