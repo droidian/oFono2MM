@@ -42,18 +42,18 @@ class MMModemInterface(ServiceInterface):
                     'MaxActiveBearers': Variant('u', 2),
                     'Manufacturer': Variant('s', ""),
                     'Model': Variant('s', ""),
-                    'Revision': Variant('s', '0'),
+                    'Revision': Variant('s', '10000'),
                     'CarrierConfiguration': Variant('s', ''),
                     'CarrierConfigurationRevision': Variant('s', '0'),
-                    'HardwareRevision': Variant('s', ""),
+                    'HardwareRevision': Variant('s', "1000"),
                     'DeviceIdentifier': Variant('s', "ofono_" + str(self.index)),
-                    'Device': Variant('s', ''),
-                    'Drivers': Variant('as', []),
+                    'Device': Variant('s', 'halium'),
+                    'Drivers': Variant('as', ['binder']),
                     'Plugin': Variant('s', 'ofono2mm'),
-                    'PrimaryPort': Variant('s', 'ofono_' + str(self.index)),
-                    'Ports': Variant('a(su)', [['ofono_' + str(self.index), 0]]),
+                    'PrimaryPort': Variant('s', 'ril_' + str(self.index)),
+                    'Ports': Variant('a(su)', [['ril_' + str(self.index), 0]]),
                     'EquipmentIdentifier': Variant('s', ''),
-                    'UnlockRequired': Variant('u', 0), 
+                    'UnlockRequired': Variant('u', 0),
                     'UnlockRetries': Variant('a{uu}', {}),
                     'State': Variant('i', 6),
                     'StateFailedReason': Variant('u', 0),
@@ -379,8 +379,8 @@ class MMModemInterface(ServiceInterface):
 
         self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
         self.props['HardwareRevision'] = Variant('s', self.ofono_props['Revision'].value if 'Revision' in self.ofono_props else '')
-        self.props['Manufacturer'] = Variant('s', self.ofono_props['Manufacturer'].value if 'Manufacturer' in self.ofono_props else 'Unknown')
-        self.props['Model'] = Variant('s', self.ofono_props['Model'].value if 'Model' in self.ofono_props else 'Unknown')
+        self.props['Manufacturer'] = Variant('s', self.ofono_props['Manufacturer'].value if 'Manufacturer' in self.ofono_props else 'ofono')
+        self.props['Model'] = Variant('s', self.ofono_props['Model'].value if 'Model' in self.ofono_props else 'binder')
 
         if old_state != self.props['State'].value:
             self.StateChanged(old_state, self.props['State'].value, 1)
