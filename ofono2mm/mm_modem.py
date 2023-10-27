@@ -6,6 +6,7 @@ from dbus_next import Variant, DBusError, BusType
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_modem_simple import MMModemSimpleInterface
+from ofono2mm.mm_modem_cdma import MMModemCDMAInterface
 from ofono2mm.mm_sim import MMSimInterface
 from ofono2mm.mm_bearer import MMBearerInterface
 
@@ -132,6 +133,10 @@ class MMModemInterface(ServiceInterface):
     async def init_mm_simple_interface(self):
         self.mm_modem_simple_interface = MMModemSimpleInterface(self)
         self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_simple_interface)
+
+    async def init_mm_cdma_interface(self):
+        self.mm_modem_cdma_interface = MMModemCDMAInterface(self)
+        self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_cdma_interface)
 
     async def init_mm_messaging_interface(self):
         self.mm_modem_messaging_interface = MMModemMessagingInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
