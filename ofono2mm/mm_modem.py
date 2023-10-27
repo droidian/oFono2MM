@@ -6,6 +6,7 @@ from dbus_next import Variant, DBusError, BusType
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_modem_simple import MMModemSimpleInterface
+from ofono2mm.mm_modem_firmware import MMModemFirmwareInterface
 from ofono2mm.mm_modem_cdma import MMModemCDMAInterface
 from ofono2mm.mm_sim import MMSimInterface
 from ofono2mm.mm_bearer import MMBearerInterface
@@ -70,7 +71,7 @@ class MMModemInterface(ServiceInterface):
     async def init_ofono_interfaces(self):
         for iface in self.ofono_props['Interfaces'].value:
             await self.add_ofono_interface(iface)
-                    
+
         await self.check_ofono_contexts()
 
     async def add_ofono_interface(self, iface):
@@ -133,6 +134,11 @@ class MMModemInterface(ServiceInterface):
     async def init_mm_simple_interface(self):
         self.mm_modem_simple_interface = MMModemSimpleInterface(self)
         self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_simple_interface)
+
+    async def init_mm_firmware_interface(self):
+        self.mm_modem_firmware_interface = MMModemFirmwareInterface(self)
+        self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_firmware_interface)
+        self.mm_modem_firmware_interface.set_props()
 
     async def init_mm_cdma_interface(self):
         self.mm_modem_cdma_interface = MMModemCDMAInterface(self)
@@ -395,7 +401,7 @@ class MMModemInterface(ServiceInterface):
         self.emit_properties_changed({'State': self.props['State'].value})
         await self.ofono_modem.call_set_property('Online', Variant('b', enable))
         self.set_props()
-    
+
     @method()
     def ListBearers(self) -> 'ao':
         return self.props['Bearers'].value
@@ -415,7 +421,7 @@ class MMModemInterface(ServiceInterface):
         ofono_ctx_interface = self.ofono_client["ofono_context"][ofono_ctx]['org.ofono.ConnectionContext']
         if 'apn' in properties:
             await ofono_ctx_interface.call_set_property("AccessPointName", properties['apn'])
-        await mm_bearer_interface.add_auth_ofono(properties['username'].value if 'username' in properties else '', 
+        await mm_bearer_interface.add_auth_ofono(properties['username'].value if 'username' in properties else '',
                                                         properties['password'].value if 'password' in properties else '')
         await ofono_ctx_interface.call_set_property("Protocol", Variant('s', 'dual'))
         mm_bearer_interface.ofono_ctx = ofono_ctx
@@ -470,11 +476,11 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def SetCurrentBands(self, bands: 'au'):
-        pass 
+        pass
 
     @method()
     def SetPrimarySimSlot(self, sim_slot: 'u'):
-        pass 
+        pass
 
     @method()
     def Command(self, cmd: 's', timeout: 'u') -> 's':

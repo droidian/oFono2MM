@@ -12,7 +12,7 @@ class MMModemSimpleInterface(ServiceInterface):
     async def Connect(self, properties: 'a{sv}') -> 'o':
         for b in self.mm_modem.bearers:
             if self.mm_modem.bearers[b].props['Properties'].value['apn'] == properties['apn']:
-                await self.mm_modem.bearers[b].add_auth_ofono(properties['username'].value if 'username' in properties else '', 
+                await self.mm_modem.bearers[b].add_auth_ofono(properties['username'].value if 'username' in properties else '',
                                                                 properties['password'].value if 'password' in properties else '')
                 self.mm_modem.bearers[b].props['Properties'] = Variant('a{sv}', properties)
                 await self.mm_modem.bearers[b].doConnect()

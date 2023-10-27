@@ -3,13 +3,13 @@ import asyncio
 def async_retryable(times=0):
     """
     Decorator that allows to retry the given function n times.
-    
+
     Usage:
-    
+
     @async_retryable(5)
     async def fail():
         raise Exception("This function will be tried five times!")
-    
+
     If times is 0 (default), the function will be retried indefinitely.
     """
 
@@ -25,7 +25,7 @@ def async_retryable(times=0):
 
                                     print("Trying again, error was %s" % e)
                                     await asyncio.sleep(5)
-                                    
+
                                     current_try += 1
                             else:
                                     return result
