@@ -18,6 +18,7 @@ __all__ = [
 	"MMModemCDMAInterface",
 	"MMModemFirmwareInterface",
 	"MMModemTimeInterface",
+	"MMModemSarInterface",
 	"MMSimInterface",
 	"MMBearerInterface",
 	"MMSmsInterface",
