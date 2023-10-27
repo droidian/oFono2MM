@@ -8,6 +8,7 @@ from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_modem_simple import MMModemSimpleInterface
 from ofono2mm.mm_modem_firmware import MMModemFirmwareInterface
 from ofono2mm.mm_modem_cdma import MMModemCDMAInterface
+from ofono2mm.mm_modem_time import MMModemTimeInterface
 from ofono2mm.mm_sim import MMSimInterface
 from ofono2mm.mm_bearer import MMBearerInterface
 
@@ -139,6 +140,10 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem_firmware_interface = MMModemFirmwareInterface(self)
         self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_firmware_interface)
         self.mm_modem_firmware_interface.set_props()
+
+    async def init_mm_time_interface(self):
+        self.mm_modem_time_interface = MMModemTimeInterface(self)
+        self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_time_interface)
 
     async def init_mm_cdma_interface(self):
         self.mm_modem_cdma_interface = MMModemCDMAInterface(self)

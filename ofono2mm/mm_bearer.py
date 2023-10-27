@@ -154,3 +154,4 @@ class MMBearerInterface(ServiceInterface):
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
         return ch
+
