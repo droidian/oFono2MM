@@ -57,8 +57,6 @@ class CachedClient:
             if not path_hashed in self.cache:
                 self.cache[path_hashed] = self.bus.get_proxy_object(self.bus_name, path, self.cache[hash(introspection)])
 
-            self.cache[interface_hashed] = self.cache[path_hashed].get_interface(interface)
-
             try:
                 self.cache[interface_hashed] = self.cache[path_hashed].get_interface(interface)
             except Exception as e:
