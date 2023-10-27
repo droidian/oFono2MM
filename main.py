@@ -108,6 +108,9 @@ class MMInterface(ServiceInterface):
         await mm_modem_interface.init_mm_messaging_interface()
         await mm_modem_interface.init_mm_simple_interface()
         await mm_modem_interface.init_mm_firmware_interface()
+        await mm_modem_interface.init_mm_time_interface()
+        await mm_modem_interface.init_mm_cdma_interface()
+        await mm_modem_interface.init_mm_sar_interface()
         self.mm_modem_interfaces.append(mm_modem_interface)
         self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(self.i))
         self.i += 1
