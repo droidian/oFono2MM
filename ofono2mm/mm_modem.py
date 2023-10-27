@@ -10,6 +10,7 @@ from ofono2mm.mm_modem_firmware import MMModemFirmwareInterface
 from ofono2mm.mm_modem_cdma import MMModemCDMAInterface
 from ofono2mm.mm_modem_time import MMModemTimeInterface
 from ofono2mm.mm_modem_sar import MMModemSarInterface
+from ofono2mm.mm_modem_oma import MMModemOmaInterface
 from ofono2mm.mm_sim import MMSimInterface
 from ofono2mm.mm_bearer import MMBearerInterface
 
@@ -153,6 +154,10 @@ class MMModemInterface(ServiceInterface):
     async def init_mm_sar_interface(self):
         self.mm_modem_sar_interface = MMModemSarInterface(self)
         self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_sar_interface)
+
+    async def init_mm_oma_interface(self):
+        self.mm_modem_oma_interface = MMModemOmaInterface(self)
+        self.bus.export('/org/freedesktop/ModemManager1/Modem/' + str(self.index), self.mm_modem_oma_interface)
 
     async def init_mm_messaging_interface(self):
         self.mm_modem_messaging_interface = MMModemMessagingInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
