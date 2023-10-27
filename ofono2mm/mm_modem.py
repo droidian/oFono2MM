@@ -274,7 +274,7 @@ class MMModemInterface(ServiceInterface):
                 if self.ofono_interface_props['org.ofono.SimManager']['Present'].value and 'PinRequired' in self.ofono_interface_props['org.ofono.SimManager']:
                     if self.ofono_interface_props['org.ofono.SimManager']['PinRequired'].value == 'none':
                         self.props['UnlockRequired'] = Variant('u', 1)
-                        if self.ofono_props['Online'].value: 
+                        if self.ofono_props['Online'].value:
                             if 'org.ofono.NetworkRegistration' in self.ofono_interface_props:
                                 if ("Status" in self.ofono_interface_props['org.ofono.NetworkRegistration']):
                                     if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
@@ -394,6 +394,7 @@ class MMModemInterface(ServiceInterface):
 
         self.props['EquipmentIdentifier'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
         self.props['HardwareRevision'] = Variant('s', self.ofono_props['Revision'].value if 'Revision' in self.ofono_props else '')
+        self.props['Revision'] = Variant('s', self.ofono_props['SoftwareVersionNumber'].value if 'SoftwareVersionNumber' in self.ofono_props else '')
         self.props['Manufacturer'] = Variant('s', self.ofono_props['Manufacturer'].value if 'Manufacturer' in self.ofono_props else 'ofono')
         self.props['Model'] = Variant('s', self.ofono_props['Model'].value if 'Model' in self.ofono_props else 'binder')
 
