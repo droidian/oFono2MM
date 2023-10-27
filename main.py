@@ -30,7 +30,10 @@ class MMInterface(ServiceInterface):
 
     @method()
     async def ScanDevices(self):
-        await self.find_ofono_modems()
+        try:
+            await self.find_ofono_modems()
+        except:
+            pass
 
     async def check_ofono_presence(self):
         dbus_iface = self.dbus_client["dbus"]["/org/freedesktop/DBus"]["org.freedesktop.DBus"]
@@ -133,4 +136,3 @@ async def main():
     await bus.wait_for_disconnect()
 
 asyncio.run(main())
-
