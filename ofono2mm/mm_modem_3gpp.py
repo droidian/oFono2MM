@@ -25,7 +25,12 @@ class MMModem3gppInterface(ServiceInterface):
             'EpsUeModeOperation': Variant('u', 0),
             'Pco': Variant('a(ubay)', []),
             'InitialEpsBearer': Variant('o', '/'),
-            'InitialEpsBearerSettings': Variant('a{sv}', {})
+            'InitialEpsBearerSettings': Variant('a{sv}', {}),
+            'PacketServiceState': Variant('u', 0),
+            'Nr5gRegistrationSettings': Variant('a{sv}', {
+                'mico-mode': Variant('u', 0),
+                'dtx-cycle': Variant('u', 0)
+            })
         }
 
     def set_props(self):
@@ -107,6 +112,30 @@ class MMModem3gppInterface(ServiceInterface):
             operators.append(mm_operator)
         return operators
 
+    @method()
+    async def SetEpsUeModeOperation(self) -> 'u':
+        pass
+
+    @method()
+    async def SetInitialEpsBearerSettings(self) -> 'a{sv}':
+        pass
+
+    @method()
+    async def SetNr5gRegistrationSettings(self) -> 'a{sv}':
+        pass
+
+    @method()
+    async def DisableFacilityLock(self) -> '(us)':
+        pass
+
+    @method()
+    async def SetCarrierLock(self) -> 'ay':
+        pass
+
+    @method()
+    async def SetPacketServiceState(self) -> 'u':
+        pass
+
     @dbus_property(access=PropertyAccess.READ)
     def Imei(self) -> 's':
         return self.props['Imei'].value
@@ -146,6 +175,14 @@ class MMModem3gppInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def InitialEpsBearerSettings(self) -> 'a{sv}':
         return self.props['InitialEpsBearerSettings'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def PacketServiceState(self) -> 'u':
+        return self.props['PacketServiceState'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Nr5gRegistrationSettings(self) -> 'a{sv}':
+        return self.props['Nr5gRegistrationSettings'].value
 
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
