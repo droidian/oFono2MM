@@ -105,6 +105,7 @@ class MMInterface(ServiceInterface):
         mm_modem_interface.set_props()
         await mm_modem_interface.init_mm_sim_interface()
         await mm_modem_interface.init_mm_3gpp_interface()
+        await mm_modem_interface.init_mm_3gpp_profile_manager_interface()
         await mm_modem_interface.init_mm_messaging_interface()
         await mm_modem_interface.init_mm_simple_interface()
         await mm_modem_interface.init_mm_firmware_interface()
