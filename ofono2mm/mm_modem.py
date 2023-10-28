@@ -439,7 +439,7 @@ class MMModemInterface(ServiceInterface):
             await ofono_ctx_interface.call_set_property("AccessPointName", properties['apn'])
         await mm_bearer_interface.add_auth_ofono(properties['username'].value if 'username' in properties else '',
                                                         properties['password'].value if 'password' in properties else '')
-        await ofono_ctx_interface.call_set_property("Protocol", Variant('s', 'dual'))
+        await ofono_ctx_interface.call_set_property("Protocol", Variant('s', 'ip'))
         mm_bearer_interface.ofono_ctx = ofono_ctx
         self.bus.export('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i), mm_bearer_interface)
         self.props['Bearers'].value.append('/org/freedesktop/ModemManager/Bearer/' + str(bearer_i))
