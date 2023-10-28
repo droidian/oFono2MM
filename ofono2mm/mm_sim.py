@@ -22,7 +22,13 @@ class MMSimInterface(ServiceInterface):
                 'Eid': Variant('s', ''),
                 'OperatorIdentifier': Variant('s', '0'),
                 'OperatorName': Variant('s', 'Some Operator'),
-                'EmergencyNumbers': Variant('as', [])
+                'EmergencyNumbers': Variant('as', []),
+                'PreferredNetworks': Variant('a(su)', []),
+                'Gid1': Variant('ay', bytes()),
+                'Gid2': Variant('ay', bytes()),
+                'SimType': Variant('u', 1),
+                'EsimStatus': Variant('u', 0),
+                'Removability': Variant('u', 1)
             }
 
     def set_props(self):
@@ -110,6 +116,30 @@ class MMSimInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def EmergencyNumbers(self) -> 'as':
         return self.props['EmergencyNumbers'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def PreferredNetworks(self) -> 'a(su)':
+        return self.props['PreferredNetworks'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Gid1(self) -> 'ay':
+        return self.props['Gid1'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Gid2(self) -> 'ay':
+        return self.props['Gid2'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def SimType(self) -> 'u':
+        return self.props['SimType'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def EsimStatus(self) -> 'u':
+        return self.props['EsimStatus'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Removability(self) -> 'u':
+        return self.props['Removability'].value
 
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
