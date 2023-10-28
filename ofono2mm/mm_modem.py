@@ -44,6 +44,7 @@ class MMModemInterface(ServiceInterface):
                     'CurrentCapabilities': Variant('u', 0),
                     'MaxBearers': Variant('u', 4),
                     'MaxActiveBearers': Variant('u', 2),
+                    'MaxActiveMultiplexedBearers': Variant('u', 2),
                     'Manufacturer': Variant('s', ""),
                     'Model': Variant('s', ""),
                     'Revision': Variant('s', '10000'),
@@ -52,6 +53,7 @@ class MMModemInterface(ServiceInterface):
                     'HardwareRevision': Variant('s', "1000"),
                     'DeviceIdentifier': Variant('s', "ofono_" + str(self.index)),
                     'Device': Variant('s', 'halium'),
+                    'Physdev': Variant('s', "/dev/binder"),
                     'Drivers': Variant('as', ['binder']),
                     'Plugin': Variant('s', 'ofono2mm'),
                     'PrimaryPort': Variant('s', 'ril_' + str(self.index)),
@@ -545,6 +547,10 @@ class MMModemInterface(ServiceInterface):
         return self.props['MaxActiveBearers'].value
 
     @dbus_property(access=PropertyAccess.READ)
+    def MaxActiveMultiplexedBearers(self) -> 'u':
+        return self.props['MaxActiveMultiplexedBearers'].value
+
+    @dbus_property(access=PropertyAccess.READ)
     def Manufacturer(self) -> 's':
         return self.props['Manufacturer'].value
 
@@ -567,6 +573,10 @@ class MMModemInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def Device(self) -> 's':
         return self.props['Device'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Physdev(self) -> 's':
+        return self.props['Physdev'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Drivers(self) -> 'as':
