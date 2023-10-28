@@ -37,10 +37,53 @@ class MMBearerInterface(ServiceInterface):
                 "Ip6Config": Variant('a{sv}', {
                     "method": Variant('u', 3)
                 }),
+                "ReloadStatsSupported": Variant('b', False),
                 "IpTimeout": Variant('u', 0),
                 "BearerType": Variant('u', 1),
-                "Properties": Variant('a{sv}', {})
+                "Properties": Variant('a{sv}', {
+                    "apn": Variant('s', ''),
+                    "ip-type": Variant('u', 1),
+                    "apn-type": Variant('u', 2),
+                    "allowed-auth": Variant('u', 0),
+                    "user": Variant('s', ''),
+                    "password": Variant('s', ''),
+                    "access-type-preference": Variant('u', 0),
+                    "roaming-allowance": Variant('u', 2),
+                    "profile-id": Variant('i', -1),
+                    "profile-name": Variant('s', ''),
+                    "profile-enabled": Variant('b', True),
+                    "profile-source": Variant('u', 0),
+                })
         }
+
+        asyncio.create_task(self.attach_to_ofono_signals())
+        asyncio.create_task(self.set_props())
+
+    async def attach_to_ofono_signals(self):
+        self.ofono_modem.on_property_changed(self.handle_properties_changed)
+
+    async def handle_properties_changed(self, changed_properties, invalidated_properties):
+        await self.set_props()
+
+    async def set_props(self):
+        apn_value = await self.ofono_find_apn()
+        self.props['Properties'].value['apn'] = Variant('s', apn_value)
+        self.emit_properties_changed({'Properties': self.props['Properties'].value})
+
+    async def ofono_find_apn(self):
+        if not 'org.ofono.ConnectionManager' in self.ofono_interfaces:
+            return []
+
+        contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts()
+        self.context_names = []
+
+        for ctx in contexts:
+            ctx_type = ctx[1]['Type'].value
+            access_point_name = ctx[1].get('AccessPointName', Variant('s', '')).value
+            if ctx_type == "internet":
+                return access_point_name
+
+        return ''
 
     @dbus_property(access=PropertyAccess.READ)
     def Interface(self) -> 's':
@@ -61,6 +104,10 @@ class MMBearerInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def Ip6Config(self) -> 'a{sv}':
         return self.props['Ip6Config'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def ReloadStatsSupported(self) -> 'b':
+        return self.props['ReloadStatsSupported'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def IpTimeout(self) -> 'u':
@@ -154,4 +201,3 @@ class MMBearerInterface(ServiceInterface):
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
         return ch
-
