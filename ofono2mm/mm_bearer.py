@@ -72,7 +72,7 @@ class MMBearerInterface(ServiceInterface):
 
     async def ofono_find_apn(self):
         if not 'org.ofono.ConnectionManager' in self.ofono_interfaces:
-            return []
+            return ''
 
         contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts()
         self.context_names = []
