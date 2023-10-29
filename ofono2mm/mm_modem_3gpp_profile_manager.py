@@ -49,9 +49,7 @@ class MMModem3gppProfileManagerInterface(ServiceInterface):
 
     @method()
     async def List(self) -> 'aa{sv}':
-        context_names = await self.check_ofono_contexts()
-        contexts_list = [{"Name": Variant('s', name)} for name in context_names]
-        return contexts_list
+        return [{}]
 
     @method()
     def Set(self, requested_properties: 'a{sv}') -> 'a{sv}':
