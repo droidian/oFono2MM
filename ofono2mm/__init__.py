@@ -7,6 +7,7 @@ from .mm_modem_cdma import *
 from .mm_modem_firmware import *
 from .mm_modem_time import *
 from .mm_modem_oma import *
+from .mm_modem_signal import *
 from .mm_sim import *
 from .mm_bearer import *
 from .mm_sms import *
@@ -23,6 +24,7 @@ __all__ = [
 	"MMModemTimeInterface",
 	"MMModemSarInterface",
 	"MMModemOmaInterface",
+	"MMModemSignalInterface",
 	"MMSimInterface",
 	"MMBearerInterface",
 	"MMSmsInterface",
