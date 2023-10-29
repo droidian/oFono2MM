@@ -25,6 +25,7 @@ __all__ = [
 	"MMModemSarInterface",
 	"MMModemOmaInterface",
 	"MMModemSignalInterface",
+	"MMModemLocationInterface",
 	"MMSimInterface",
 	"MMBearerInterface",
 	"MMSmsInterface",
