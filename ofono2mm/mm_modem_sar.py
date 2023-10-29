@@ -6,17 +6,13 @@ class MMModemSarInterface(ServiceInterface):
     def __init__(self, mm_modem):
         super().__init__('org.freedesktop.ModemManager1.Modem.Sar')
         self.mm_modem = mm_modem
+        self.state = False
+        self.power_level = 0
         self.set_props()
 
     def set_props(self):
-        state_val = self.mm_modem.props.get('State', False)
-        if not isinstance(state_val, bool):
-            state_val = False
-
-        power_level_val = self.mm_modem.props.get('PowerLevel', 0)
-        if not isinstance(power_level_val, int):
-            power_level_val = 0
-
+        state_val = self.state
+        power_level_val = self.power_level
         self.props = {
             'State': Variant('b', state_val),
             'PowerLevel': Variant('u', power_level_val)
@@ -40,10 +36,12 @@ class MMModemSarInterface(ServiceInterface):
 
     @method()
     def Enable(self, enable: 'b'):
+        self.state = enable
         self.props['State'] = Variant('b', enable)
         self.emit_props_change()
 
     @method()
     def SetPowerLevel(self, level: 'u'):
+        self.power_level = level
         self.props['PowerLevel'] = Variant('u', level)
         self.emit_props_change()
