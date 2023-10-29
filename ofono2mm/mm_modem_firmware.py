@@ -31,7 +31,7 @@ class MMModemFirmwareInterface(ServiceInterface):
         return self.props['UpdateSettings'].value
 
     @method()
-    async def List(self):
+    async def List(self) -> 'saa{sv}':
         hardware_revision = self.mm_modem.props.get('HardwareRevision', Variant('s', ''))
         selected = hardware_revision.value
 
