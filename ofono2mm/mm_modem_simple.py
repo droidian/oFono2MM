@@ -28,3 +28,21 @@ class MMModemSimpleInterface(ServiceInterface):
                 await self.mm_modem.bearers[b].doDisconnect()
         if path in self.mm_modem.bearers:
             await self.mm_modem.bearers[path].doDisconnect()
+
+    @method()
+    async def GetStatus(self) -> 'a{sv}':
+        status_properties = {}
+
+        status_properties["state"] = Variant("u", 9)
+        status_properties["signal-quality"] = Variant("(ub)", (100, True))
+        status_properties["current-bands"] = Variant("au", [0])
+        status_properties["access-technologies"] = Variant("u", 19)
+        status_properties["m3gpp-registration-state"] = Variant("u", 4)
+        status_properties["m3gpp-operator-code"] = Variant("s", "")
+        status_properties["m3gpp-operator-name"] = Variant("s", "")
+        status_properties["cdma-cdma1x-registration-state"] = Variant("u", 0)
+        status_properties["cdma-evdo-registration-state"] = Variant("u", 0)
+        status_properties["cdma-sid"] = Variant("u", 0)
+        status_properties["cdma-nid"] = Variant("u", 0)
+
+        return status_properties
