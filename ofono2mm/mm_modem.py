@@ -482,33 +482,33 @@ class MMModemInterface(ServiceInterface):
             "Properties": Variant('a{sv}', properties)
         })
 
-        contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts()
-        self.context_names = []
+        if 'org.ofono.ConnectionManager' in self.ofono_interfaces:
+            # users would usually have to do
+            # set-context-property 0 AccessPointName example.apn && activate-context 1
+            # to activate the correct context for ofono2mm to use, lets do it on bearer creation to not need ofono scripts
+            contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts()
+            self.context_names = []
+            ctx_idx = 0
+            chosen_apn = None
+            chosen_ctx_path = None
+            for ctx in contexts:
+                name = ctx[1].get('Name', Variant('s', '')).value
+                access_point_name = ctx[1].get('AccessPointName', Variant('s', '')).value
+                if name.lower() == "internet":
+                    ctx_idx += 1
+                    if access_point_name:
+                        self.context_names.append(access_point_name)
+                        chosen_apn = access_point_name
+                        chosen_ctx_path = ctx[0]
 
-        # users would usually have to do
-        # set-context-property 0 AccessPointName example.apn && activate-context 1
-        # to activate the correct context for ofono2mm to use, lets do it on bearer creation to not need ofono scripts
-        ctx_idx = 0
-        chosen_apn = None
-        chosen_ctx_path = None
-        for ctx in contexts:
-            name = ctx[1].get('Name', Variant('s', '')).value
-            access_point_name = ctx[1].get('AccessPointName', Variant('s', '')).value
-            if name.lower() == "internet":
-                ctx_idx += 1
-                if access_point_name:
-                    self.context_names.append(access_point_name)
-                    chosen_apn = access_point_name
-                    chosen_ctx_path = ctx[0]
+                        print(chosen_ctx_path)
 
-        print(chosen_ctx_path)
-
-        if chosen_ctx_path:
-            print("set apn")
-            chosen_ctx_interface = self.ofono_client["ofono_context"][chosen_ctx_path]['org.ofono.ConnectionContext']
-            await chosen_ofono_ctx_interface.call_set_property("Active", Variant('b', False))
-            await chosen_ofono_ctx_interface.call_set_property("AccessPointName", Variant('s', chosen_apn))
-            await chosen_ofono_ctx_interface.call_set_property("Active", Variant('b', True))
+                if chosen_ctx_path:
+                    print("set apn")
+                    chosen_ctx_interface = self.ofono_client["ofono_context"][chosen_ctx_path]['org.ofono.ConnectionContext']
+                    await chosen_ctx_interface.call_set_property("Active", Variant('b', False))
+                    await chosen_ctx_interface.call_set_property("AccessPointName", Variant('s', chosen_apn))
+                    await chosen_ctx_interface.call_set_property("Active", Variant('b', True))
 
         ofono_ctx = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_add_context("internet")
         ofono_ctx_interface = self.ofono_client["ofono_context"][ofono_ctx]['org.ofono.ConnectionContext']
