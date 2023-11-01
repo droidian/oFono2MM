@@ -14,7 +14,7 @@ import asyncio
 class MMBearerInterface(ServiceInterface):
     def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props, mm_modem):
         super().__init__('org.freedesktop.ModemManager1.Bearer')
-        print("Creating new bearer interface for %i", index)
+        print(f"Creating new bearer interface for {index}")
         self.index = index
         self.bus = bus
         self.ofono_client = ofono_client
@@ -200,4 +200,5 @@ class MMBearerInterface(ServiceInterface):
             if iface in self.ofono_interface_props:
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
+
         return ch

@@ -25,6 +25,7 @@ class MMModemOmaInterface(ServiceInterface):
             self._pending_network_initiated_sessions = [
                 s for s in self._pending_network_initiated_sessions if s[1] != session_id
             ]
+
         pass
 
     @method()

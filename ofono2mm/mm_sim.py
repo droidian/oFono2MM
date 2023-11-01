@@ -149,5 +149,7 @@ class MMSimInterface(ServiceInterface):
         def ch(name, varval):
             if iface in self.ofono_interface_props:
                 self.ofono_interface_props[iface][name] = varval
+
             self.set_props()
+
         return ch

@@ -17,6 +17,7 @@ class MMModemSimpleInterface(ServiceInterface):
                 self.mm_modem.bearers[b].props['Properties'] = Variant('a{sv}', properties)
                 await self.mm_modem.bearers[b].doConnect()
                 return b
+
         bearer = await self.mm_modem.doCreateBearer(properties)
         await self.mm_modem.bearers[bearer].doConnect()
         return bearer

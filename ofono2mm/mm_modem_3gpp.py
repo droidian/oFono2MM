@@ -65,6 +65,7 @@ class MMModem3gppInterface(ServiceInterface):
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
                 changed_props.update({ prop: self.props[prop].value })
+
         self.emit_properties_changed(changed_props)
 
     @method()
@@ -77,7 +78,7 @@ class MMModem3gppInterface(ServiceInterface):
                     pass
             return
         try:
-            ofono_operator_interface = self.ofono_client["ofono_operator"][str(self.modem_name) + "/operator/" + str(operator_id)]['org.ofono.NetworkOperator']
+            ofono_operator_interface = self.ofono_client["ofono_operator"][f"{self.modem_name}/operator/{operator_id}"]['org.ofono.NetworkOperator']
             await ofono_operator_interface.call_register()
         except DBusError:
             return
@@ -97,9 +98,11 @@ class MMModem3gppInterface(ServiceInterface):
                 mm_operator.update({'status': Variant('u', 2)})
             if ofono_operator[1]['Status'].value == "forbidden":
                 mm_operator.update({'status': Variant('u', 3)})
+
             mm_operator.update({'operator-long': ofono_operator[1]['Name']})
             mm_operator.update({'operator-short': ofono_operator[1]['Name']})
             mm_operator.update({'operator-code': Variant('s', ofono_operator[1]['MobileCountryCode'].value + ofono_operator[1]['MobileNetworkCode'].value)})
+
             current_tech = 0
             for tech in ofono_operator[1]['Technologies'].value:
                 if tech == "lte":
@@ -108,8 +111,10 @@ class MMModem3gppInterface(ServiceInterface):
                     current_tech |= 1 << 5
                 elif tech == "gsm":
                     current_tech |= 1 << 1
+
             mm_operator.update({'access-technology': Variant('u', current_tech)})
             operators.append(mm_operator)
+
         return operators
 
     @method()
@@ -193,4 +198,5 @@ class MMModem3gppInterface(ServiceInterface):
             if iface in self.ofono_interface_props:
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
+
         return ch
