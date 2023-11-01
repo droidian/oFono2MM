@@ -361,7 +361,9 @@ class MMModemInterface(ServiceInterface):
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props and self.props['State'].value == 8:
             if "Technology" in self.ofono_interface_props['org.ofono.NetworkRegistration']:
                 current_tech = 0
-                if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
+                if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "nr":
+                    current_tech |= 1 << 15
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
                     current_tech |= 1 << 14
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts":
                     current_tech |= 1 << 5
@@ -389,9 +391,14 @@ class MMModemInterface(ServiceInterface):
                 if 'lte' in ofono_techs:
                     caps |= 8
                     modes |= 8
+                if 'nr' in ofono_techs:
+                    caps |= 16
+                    modes |= 16
 
             if 'TechnologyPreference' in self.ofono_interface_props['org.ofono.RadioSettings']:
                 ofono_pref =  self.ofono_interface_props['org.ofono.RadioSettings']['TechnologyPreference'].value
+                if ofono_pref == 'nr':
+                    pref = 16
                 if ofono_pref == 'lte':
                     pref = 8
                 if ofono_pref == 'umts':
@@ -407,6 +414,25 @@ class MMModemInterface(ServiceInterface):
             self.props['SupportedCapabilities'] = Variant('au', [4])
 
         supported_modes = []
+        if modes == 30:
+            supported_modes.append([30, 16])
+            supported_modes.append([14, 8])
+            supported_modes.append([6, 4])
+            supported_modes.append([2, 0])
+        if modes == 28:
+            supported_modes.append([28, 0])
+        if modes == 26:
+            supported_modes.append([26, 0])
+        if modes == 24:
+            supported_modes.append([24, 0])
+        if modes == 22:
+            supported_modes.append([22, 0])
+        if modes == 20:
+            supported_modes.append([20, 0])
+        if modes == 18:
+            supported_modes.append([18, 0])
+        if modes == 16:
+            supported_modes.append([16, 0])
         if modes == 14:
             supported_modes.append([14, 8])
             supported_modes.append([6, 4])
@@ -557,6 +583,8 @@ class MMModemInterface(ServiceInterface):
     @method()
     async def SetCurrentModes(self, modes: '(uu)'):
         if modes in self.props['SupportedModes'].value:
+            if modes[1] == 16:
+                await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'nr'))
             if modes[1] == 8:
                 await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'lte'))
             if modes[1] == 4:
@@ -568,6 +596,8 @@ class MMModemInterface(ServiceInterface):
                     await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'umts'))
                 elif modes[0] | 8:
                     await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'lte'))
+                elif modes[0] | 16:
+                    await self.ofono_interfaces['org.ofono.RadioSettings'].call_set_property('TechnologyPreference', Variant('s', 'nr'))
 
         self.set_props()
 

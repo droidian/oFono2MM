@@ -105,6 +105,8 @@ class MMModem3gppInterface(ServiceInterface):
 
             current_tech = 0
             for tech in ofono_operator[1]['Technologies'].value:
+                if tech == "nr":
+                    current_tech |= 1 << 15
                 if tech == "lte":
                     current_tech |= 1 << 14
                 elif tech == "umts":
