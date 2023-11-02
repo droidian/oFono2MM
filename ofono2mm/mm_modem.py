@@ -367,7 +367,7 @@ class MMModemInterface(ServiceInterface):
                     current_tech |= 1 << 14
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts":
                     current_tech |= 1 << 5
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "edge":
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "edge" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gprs":
                     current_tech |= 1 << 1
 
                 self.props['AccessTechnologies'] = Variant('u', current_tech)
