@@ -8,7 +8,7 @@ class MMModem3gppProfileManagerInterface(ServiceInterface):
     def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Modem.Modem3gpp.ProfileManager')
         self.index = index
-        self.bus = bus
+        self.bus = bus 
         self.ofono_client = ofono_client
         self.ofono_proxy = self.ofono_client["ofono_modem"][modem_name]
         self.modem_name = modem_name
@@ -18,46 +18,54 @@ class MMModem3gppProfileManagerInterface(ServiceInterface):
         self.ofono_modem = self.ofono_proxy['org.ofono.Modem']
         self.index_field = 'profile-id'
         self.context_names = []
-        self.props = {}
-        asyncio.create_task(self.attach_to_ofono_signals())
-        asyncio.create_task(self.set_props())
-
-    async def attach_to_ofono_signals(self):
-        self.ofono_modem.on_property_changed(self.handle_properties_changed)
-
-    async def handle_properties_changed(self, changed_properties, invalidated_properties):
-        await self.set_props()
-
-    async def set_props(self):
-        await self.check_ofono_contexts()
-        self.props['Contexts'] = Variant('as', self.context_names)
-        self.emit_properties_changed({'Contexts': self.context_names})
-
-    async def check_ofono_contexts(self):
-        if not 'org.ofono.ConnectionManager' in self.ofono_interfaces:
-            return []
-
-        contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts()
-        self.context_names = []
-
-        for ctx in contexts:
-            access_point_name = ctx[1].get('AccessPointName', Variant('s', '')).value
-            if access_point_name:
-                 self.context_names.append(access_point_name)
-
-        return self.context_names
+        self.props = {
+                    "apn": Variant('s', ''),
+                    "ip-type": Variant('u', 1),
+                    "apn-type": Variant('u', 2),
+                    "allowed-auth": Variant('u', 0),
+                    "user": Variant('s', ''),
+                    "password": Variant('s', ''),
+                    "roaming-allowance": Variant('u', 0),
+                    "access-type-preference": Variant('u', 0),
+                    "profile-id": Variant('i', -1),
+                    "profile-name": Variant('s', ''),
+                    "profile-enabled": Variant('b', True),
+                    "profile-source": Variant('u', 0),
+        }
 
     @method()
     async def List(self) -> 'aa{sv}':
-        return [{}]
+        properties = {}
+        for key, value in self.props.items():
+            if key != "roaming-allowance":
+                properties[key] = value
+
+        return [properties]
 
     @method()
-    def Set(self, requested_properties: 'a{sv}') -> 'a{sv}':
-        pass
+    async def Set(self, requested_properties: 'a{sv}') -> 'a{sv}':
+        stored_properties = {}
+        for key, value in requested_properties.items():
+            if key in self.props:
+                self.props[key] = value
+                stored_properties[key] = value
+
+        if stored_properties:
+            self.Updated()
+
+        if "roaming-allowance" in requested_properties:
+            roaming_value_variant = requested_properties["roaming-allowance"]
+            roaming_allowed = roaming_value_variant.value == 'True'
+            ofono_interface = self.ofono_client["ofono_modem"][f'/ril_{self.index}']['org.ofono.ConnectionManager']
+
+            await ofono_interface.call_set_property("RoamingAllowed", Variant('b', roaming_allowed))
+        return stored_properties
 
     @method()
-    def Delete(self, properties: 'a{sv}'):
-        pass
+    async def Delete(self, properties: 'a{sv}'):
+        for key, value in properties.items():
+            if key in self.props:
+                del self.props[key]
 
     @signal()
     def Updated(self):
@@ -66,8 +74,3 @@ class MMModem3gppProfileManagerInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def IndexField(self) -> 's':
         return self.index_field
-
-    @dbus_property(access=PropertyAccess.READ)
-    async def Contexts(self) -> 'as':
-        await self.set_props()
-        return self.props['Contexts'].value
