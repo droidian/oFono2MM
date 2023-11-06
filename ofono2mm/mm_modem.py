@@ -535,6 +535,7 @@ class MMModemInterface(ServiceInterface):
                     chosen_ctx_interface = self.ofono_client["ofono_context"][chosen_ctx_path]['org.ofono.ConnectionContext']
                     await chosen_ctx_interface.call_set_property("Active", Variant('b', False))
                     await chosen_ctx_interface.call_set_property("AccessPointName", Variant('s', chosen_apn))
+                    await chosen_ctx_interface.call_set_property("Protocol", Variant('s', 'ip'))
                     await chosen_ctx_interface.call_set_property("Active", Variant('b', True))
 
         ofono_ctx = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_add_context("internet")
