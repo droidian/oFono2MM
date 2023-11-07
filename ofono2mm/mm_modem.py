@@ -163,7 +163,7 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem_firmware_interface.set_props()
 
     async def init_mm_time_interface(self):
-        self.mm_modem_time_interface = MMModemTimeInterface(self)
+        self.mm_modem_time_interface = MMModemTimeInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_time_interface)
 
     async def init_mm_cdma_interface(self):
