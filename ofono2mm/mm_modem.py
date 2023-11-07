@@ -498,11 +498,18 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     async def CreateBearer(self, properties: 'a{sv}') -> 'o':
-        await self.doCreateBearer(properties)
+        try:
+            return await self.doCreateBearer(properties)
+        except Exception as e:
+            pass
 
     async def doCreateBearer(self, properties):
         global bearer_i
-        print("docreatebearer %d" % bearer_i)
+
+        if 'org.ofono.ConnectionManager' not in self.ofono_interfaces:
+            return
+
+        print(f"docreatebearer {bearer_i}" )
         mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props, self)
         mm_bearer_interface.props.update({
             "Properties": Variant('a{sv}', properties)

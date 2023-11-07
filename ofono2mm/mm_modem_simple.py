@@ -26,9 +26,15 @@ class MMModemSimpleInterface(ServiceInterface):
     async def Disconnect(self, path: 'o'):
         if path == '/':
             for b in self.mm_modem.bearers:
-                await self.mm_modem.bearers[b].doDisconnect()
+                try:
+                    await self.mm_modem.bearers[b].doDisconnect()
+                except Exception as e:
+                    pass
         if path in self.mm_modem.bearers:
-            await self.mm_modem.bearers[path].doDisconnect()
+            try:
+                await self.mm_modem.bearers[path].doDisconnect()
+            except Exception as e:
+                pass
 
     @method()
     async def GetStatus(self) -> 'a{sv}':

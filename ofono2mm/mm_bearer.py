@@ -131,8 +131,11 @@ class MMBearerInterface(ServiceInterface):
 
     async def add_auth_ofono(self, username, password):
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
-        await ofono_ctx_interface.call_set_property("Username", Variant('s', username))
-        await ofono_ctx_interface.call_set_property("Password", Variant('s', password))
+        try:
+            await ofono_ctx_interface.call_set_property("Username", Variant('s', username))
+            await ofono_ctx_interface.call_set_property("Password", Variant('s', password))
+        except Exception as e:
+            pass
 
     def ofono_context_changed(self, propname, value):
         if propname == "Active":
