@@ -14,5 +14,7 @@ Architecture: all
 Depends: ${misc:Depends},
          ${python3:Depends},
 	 python3-dbus-next,
+	 python3-gi,
 	 modemmanager,
+	 geoclue-2.0
 Description: A simple python script implementing ModemManager DBus API and using ofono to manage the modem
