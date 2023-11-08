@@ -35,12 +35,10 @@ class MMModemFirmwareInterface(ServiceInterface):
         hardware_revision = self.mm_modem.props.get('HardwareRevision', Variant('s', ''))
         selected = hardware_revision.value
 
-        installed_firmware = [
-            {
-                'image-type': Variant('u', 1),
-                'unique-id': selected
-            }
-        ]
+        installed_firmware = {
+            'image-type': Variant('u', 1),
+            'unique-id': Variant('s', selected)
+        }
 
         return [selected, [installed_firmware]]
 
