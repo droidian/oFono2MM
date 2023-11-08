@@ -489,7 +489,12 @@ class MMModemInterface(ServiceInterface):
         self.props['State'] = Variant('i', 6 if enable else 3)
         self.StateChanged(old_state, self.props['State'].value, 1)
         self.emit_properties_changed({'State': self.props['State'].value})
-        await self.ofono_modem.call_set_property('Online', Variant('b', enable))
+
+        try:
+            await self.ofono_modem.call_set_property('Online', Variant('b', enable))
+        except Exception as e:
+            pass
+
         self.set_props()
 
     @method()
@@ -602,7 +607,23 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     async def SetPowerState(self, state: 'u'):
-        await self.ofono_modem.call_set_property('Powered', Variant('b', state > 1))
+        try:
+            await self.ofono_modem.call_set_property('Powered', Variant('b', state > 1))
+        except Exception as e:
+            pass
+
+        if state in [2, 3]:  # If state is 'on' or 'low'
+            old_state = self.props['State'].value
+            self.props['State'] = Variant('i', 6)  # 6 typically represents an enabled state
+            self.StateChanged(old_state, self.props['State'].value, 1)
+            self.emit_properties_changed({'State': self.props['State'].value})
+
+            try:
+                await self.ofono_modem.call_set_property('Online', Variant('b', enable))
+            except Exception as e:
+                pass
+
+            self.set_props()
 
     @method()
     def SetCurrentCapabilities(self, capabilities: 'u'):
