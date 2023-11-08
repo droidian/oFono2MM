@@ -15,12 +15,23 @@ class MMModemLocationInterface(ServiceInterface):
         self.supported_assistance_data = 0
         self.enabled = 0
         self.signals_location = False
-        self.location = {}
+        self.latitude = 0
+        self.longitude = 0
+        self.altitude = 0
+        utc_time = datetime.utcnow().isoformat()
+
+        self.location = {
+            2: Variant('a{sv}', {
+                'utc-time': Variant('s', utc_time),
+                'latitude': Variant('d', self.latitude),
+                'longitude': Variant('d', self.longitude),
+                'altitude': Variant('d', self.altitude)
+            })
+        }
+
         self.supl_server = ""
         self.assistance_data_servers = []
         self.gps_refresh_rate = 30
-
-        self.geoclue = Geoclue.Simple.new_sync('ModemManager', Geoclue.AccuracyLevel.NEIGHBORHOOD, None)
 
     @method()
     def Setup(self, sources: 'u', signal_location: 'b') -> None:
@@ -35,21 +46,26 @@ class MMModemLocationInterface(ServiceInterface):
             self.signals_location = False
 
     @method()
-    def GetLocation(self) -> 'a{uv}':
-        location = self.geoclue.get_location()
-        latitude = location.get_property('latitude')
-        longitude = location.get_property('longitude')
+    async def GetLocation(self) -> 'a{uv}':
+        geoclue = Geoclue.Simple.new_sync('ModemManager', Geoclue.AccuracyLevel.NEIGHBORHOOD, None)
+        location = geoclue.get_location()
+
+        # geoclue has issues, it returns lat and long in place of each other
+        longitude = location.get_property('latitude')
+        latitude = location.get_property('longitude')
+        altitude = location.get_property('altitude')
         utc_time = datetime.utcnow().isoformat()
 
         self.location = {
-            'utc-time': Variant('s', utc_time),
-            'latitude': Variant('d', latitude),
-            'longitude': Variant('d', longitude)
+            2: Variant('a{sv}', { # 2 is MM_MODEM_LOCATION_SOURCE_GPS_RAW
+                'utc-time': Variant('s', utc_time),
+                'latitude': Variant('d', latitude),
+                'longitude': Variant('d', longitude),
+                'altitude': Variant('d', altitude)
+            })
         }
 
-        # has to be tested more, it gathers correctly tho
-        # return self.location
-        return {}
+        return self.location
 
     @method()
     def SetSuplServer(self, supl: 's') -> None:
