@@ -34,6 +34,7 @@ class MMModemInterface(ServiceInterface):
         self.ofono_props = {}
         self.ofono_interfaces = {}
         self.ofono_interface_props = {}
+        self.mm_cell_type = 0
         self.mm_modem3gpp_interface = False
         self.mm_modem_messaging_interface = False
         self.mm_sim_interface = False
@@ -362,12 +363,16 @@ class MMModemInterface(ServiceInterface):
                 current_tech = 0
                 if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "nr":
                     current_tech |= 1 << 15
+                    self.mm_cell_type = 6
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
                     current_tech |= 1 << 14
+                    self.mm_cell_type = 5
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hspa" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hsdpa" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hsupa":
                     current_tech |= 1 << 5
+                    self.mm_cell_type = 3
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "edge" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gprs":
                     current_tech |= 1 << 1
+                    self.mm_cell_type = 2
 
                 self.props['AccessTechnologies'] = Variant('u', current_tech)
             else:
@@ -657,6 +662,15 @@ class MMModemInterface(ServiceInterface):
     @method()
     def SetPrimarySimSlot(self, sim_slot: 'u'):
         pass
+
+    @method()
+    def GetCellInfo(self) -> 'aa{sv}':
+        cell_info = {
+            "cell-type": Variant("u", self.mm_cell_type),
+            "serving": Variant("b", self.props['State'].value == 8), # 8 should mean its registered correctly to a network
+        }
+
+        return [cell_info]
 
     @method()
     def Command(self, cmd: 's', timeout: 'u') -> 's':
