@@ -586,8 +586,19 @@ class MMModemInterface(ServiceInterface):
         self.set_props()
 
     @method()
-    def FactoryReset(self, code: 's'):
-        pass #TODO: Do reset the modem!
+    async def FactoryReset(self, code: 's'):
+        # not quite a factory reset but better than nothing
+        await self.ofono_modem.call_set_property('Powered', Variant('b', False))
+        await self.ofono_modem.call_set_property('Powered', Variant('b', True))
+
+        old_state = self.props['State'].value
+        self.props['State'] = Variant('i', 6)  # 6 typically represents an enabled state
+        self.StateChanged(old_state, self.props['State'].value, 1)
+        self.emit_properties_changed({'State': self.props['State'].value})
+
+        await self.ofono_modem.call_set_property('Online', Variant('b', True))
+
+        self.set_props()
 
     @method()
     async def SetPowerState(self, state: 'u'):
