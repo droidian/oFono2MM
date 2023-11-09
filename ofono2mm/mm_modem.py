@@ -161,7 +161,7 @@ class MMModemInterface(ServiceInterface):
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem3gpp_profile_manager_interface)
 
     async def init_mm_simple_interface(self):
-        self.mm_modem_simple_interface = MMModemSimpleInterface(self)
+        self.mm_modem_simple_interface = MMModemSimpleInterface(self, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_simple_interface)
 
     async def init_mm_firmware_interface(self):
