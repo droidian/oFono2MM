@@ -4,6 +4,7 @@ from dbus_next.constants import PropertyAccess
 from dbus_next import Variant, DBusError, BusType
 
 from ofono2mm.mm_modem_3gpp import MMModem3gppInterface
+from ofono2mm.mm_modem_3gpp_ussd import MMModem3gppUssdInterface
 from ofono2mm.mm_modem_3gpp_profile_manager import MMModem3gppProfileManagerInterface
 from ofono2mm.mm_modem_messaging import MMModemMessagingInterface
 from ofono2mm.mm_modem_simple import MMModemSimpleInterface
@@ -149,6 +150,10 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem3gpp_interface = MMModem3gppInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem3gpp_interface)
         self.mm_modem3gpp_interface.set_props()
+
+    async def init_mm_3gpp_ussd_interface(self):
+        self.mm_modem3gpp_ussd_interface = MMModem3gppUssdInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem3gpp_ussd_interface)
 
     async def init_mm_3gpp_profile_manager_interface(self):
         self.mm_modem3gpp_profile_manager_interface = MMModem3gppProfileManagerInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)

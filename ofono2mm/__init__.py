@@ -1,4 +1,5 @@
 from .mm_modem_3gpp import *
+from .mm_modem_3gpp_ussd import *
 from .mm_modem_3gpp_profile_manager import *
 from .mm_modem_messaging import *
 from .mm_modem import *
@@ -15,6 +16,7 @@ from .ofono import *
 
 __all__ = [
 	"MMModem3gppInterface",
+	"MMModem3gppUssdInterface",
 	"MMModem3gppProfileManagerInterface",
 	"MMModemInterface",
 	"MMModemMessagingInterface",
