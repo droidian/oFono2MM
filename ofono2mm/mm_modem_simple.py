@@ -19,7 +19,12 @@ class MMModemSimpleInterface(ServiceInterface):
                 return b
 
         bearer = await self.mm_modem.doCreateBearer(properties)
-        await self.mm_modem.bearers[bearer].doConnect()
+
+        try:
+            await self.mm_modem.bearers[bearer].doConnect()
+        except Exception as e:
+            pass
+
         return bearer
 
     @method()
