@@ -36,20 +36,23 @@ class MMModem3gppUssdInterface(ServiceInterface):
 
     @dbus_property(access=PropertyAccess.READ)
     async def State(self) -> 'u':
-        result = await self.ofono_interfaces['org.ofono.SupplementaryServices'].call_get_properties()
-        result_str = result['State'].value
+        try:
+            result = await self.ofono_interfaces['org.ofono.SupplementaryServices'].call_get_properties()
+            result_str = result['State'].value
 
-        if result_str == 'idle':
-            ussd_state = 1
-        elif result_str == "active":
-            ussd_state = 2
-        elif result_str == "user-response":
-            ussd_state = 3
-        else:
+            if result_str == 'idle':
+                ussd_state = 1
+            elif result_str == "active":
+                ussd_state = 2
+            elif result_str == "user-response":
+                ussd_state = 3
+            else:
+                ussd_state = 0
+
+            self.ofono_interfaces['org.ofono.SupplementaryServices'].on_notification_received(self.save_notification_received)
+            self.ofono_interfaces['org.ofono.SupplementaryServices'].on_request_received(self.save_request_received)
+        except Exception as e:
             ussd_state = 0
-
-        self.ofono_interfaces['org.ofono.SupplementaryServices'].on_notification_received(self.save_notification_received)
-        self.ofono_interfaces['org.ofono.SupplementaryServices'].on_request_received(self.save_request_received)
 
         return ussd_state
 
