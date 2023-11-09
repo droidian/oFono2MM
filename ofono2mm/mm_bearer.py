@@ -31,6 +31,7 @@ class MMBearerInterface(ServiceInterface):
                 "Interface": Variant('s', ''),
                 "Connected": Variant('b', False),
                 "Suspended": Variant('b', False),
+                "Multiplexed": Variant('b', True),
                 "Ip4Config": Variant('a{sv}', {
                     "method": Variant('u', 3)
                 }),
@@ -48,7 +49,7 @@ class MMBearerInterface(ServiceInterface):
                     "user": Variant('s', ''),
                     "password": Variant('s', ''),
                     "access-type-preference": Variant('u', 0),
-                    "roaming-allowance": Variant('u', 2),
+                    "roaming-allowance": Variant('u', 0),
                     "profile-id": Variant('i', -1),
                     "profile-name": Variant('s', ''),
                     "profile-enabled": Variant('b', True),
@@ -67,6 +68,10 @@ class MMBearerInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def Suspended(self) -> 'b':
         return self.props['Suspended'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Multiplexed(self) -> 'b':
+        return self.props['Multiplexed'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Ip4Config(self) -> 'a{sv}':
@@ -92,12 +97,63 @@ class MMBearerInterface(ServiceInterface):
     def Properties(self) -> 'a{sv}':
         return self.props['Properties'].value
 
+    async def set_props(self):
+        old_props = self.props.copy()
+        if 'org.ofono.ConnectionManager' in self.ofono_interface_props:
+            contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts()
+            self.context_names = []
+            ctx_idx = 0
+            chosen_apn = None
+            chosen_ctx_path = None
+            for ctx in contexts:
+                name = ctx[1].get('Name', Variant('s', '')).value
+                access_point_name = ctx[1].get('AccessPointName', Variant('s', '')).value
+                auth_method = ctx[1].get('AuthenticationMethod', Variant('s', '')).value
+                username = ctx[1].get('Username', Variant('s', '')).value
+                password = ctx[1].get('Password', Variant('s', '')).value
+                if name.lower() == "internet":
+                    ctx_idx += 1
+                    if access_point_name:
+                        self.context_names.append(access_point_name)
+                        chosen_apn = access_point_name
+                        chosen_auth_method = auth_method
+                        chosen_username = username
+                        chosen_password = password
+                        chosen_ctx_path = ctx[0]
+
+            self.props['Properties'].value['apn'] = Variant('s', chosen_apn if chosen_apn != '' else '')
+            self.props['Properties'].value['user'] = Variant('s', chosen_username if chosen_username != '' else '')
+            self.props['Properties'].value['password'] = Variant('s', chosen_password if chosen_password != '' else '')
+
+            if chosen_auth_method == 'none':
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 1)
+            elif chosen_auth_method == 'pap':
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 2)
+            elif chosen_auth_method == 'chap':
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 3)
+            else:
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 0)
+
+            ofono_interface = self.ofono_client["ofono_modem"][f'/ril_{self.index}']['org.ofono.ConnectionManager']
+
+            roaming_allowed = None
+            connman_props = await ofono_interface.call_get_properties()
+
+            if connman_props.get('RoamingAllowed', Variant('b', True).value) != "":
+                roaming_allowed = connman_props.get('RoamingAllowed', Variant('b', True).value).value
+
+                if roaming_allowed == True:
+                    self.props['Properties'].value['roaming-allowance'] = Variant('u', 2)
+                elif roaming_allowed == False:
+                    self.props['Properties'].value['roaming-allowance'] = Variant('u', 0)
+
     @method()
     async def Connect(self):
         await self.doConnect()
 
     @async_retryable()
     async def doConnect(self):
+        await self.set_props()
         print("Do connect")
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
@@ -143,6 +199,7 @@ class MMBearerInterface(ServiceInterface):
                 self.disconnecting = False
             elif not self.disconnecting and (not value.value) and self.reconnect_task is None and self.props['Connected'].value:
                 self.reconnect_task = asyncio.create_task(self.doConnect())
+
             self.props['Connected'] = value
             self.emit_properties_changed({'Connected': value.value})
         elif propname == "Settings":
@@ -163,6 +220,7 @@ class MMBearerInterface(ServiceInterface):
                     self.props['Ip4Config'].value['dns' + str(i + 1)] = Variant('s', value.value['DomainNameServers'].value[i])
             if 'Gateway' in value.value:
                 self.props['Ip4Config'].value['gateway'] = value.value['Gateway']
+
             self.emit_properties_changed({'Ip4Config': self.props['Ip4Config'].value})
 
     def ofono_changed(self, name, varval):
