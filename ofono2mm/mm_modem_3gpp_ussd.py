@@ -14,8 +14,11 @@ class MMModem3gppUssdInterface(ServiceInterface):
         self.ofono_props = ofono_props
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
-        self.network_notification = ''
-        self.network_request = ''
+        self.props = {
+                'State': Variant('u', 0),
+                'NetworkNotification': Variant('s', ''),
+                'NetworkRequest': Variant('s', ''),
+            }
 
     @method()
     async def Initiate(self, command: 's') -> 's':
@@ -41,31 +44,31 @@ class MMModem3gppUssdInterface(ServiceInterface):
             result_str = result['State'].value
 
             if result_str == 'idle':
-                ussd_state = 1
+                self.props['State'] = Variant('u', 1)
             elif result_str == "active":
-                ussd_state = 2
+                self.props['State'] = Variant('u', 2)
             elif result_str == "user-response":
-                ussd_state = 3
+                self.props['State'] = Variant('u', 3)
             else:
-                ussd_state = 0
+                self.props['State'] = Variant('u', 0)
 
             self.ofono_interfaces['org.ofono.SupplementaryServices'].on_notification_received(self.save_notification_received)
             self.ofono_interfaces['org.ofono.SupplementaryServices'].on_request_received(self.save_request_received)
         except Exception as e:
-            ussd_state = 0
+            self.props['State'] = Variant('u', 0)
 
-        return ussd_state
+        return self.props['State'].value
 
     def save_notification_received(self, message):
-        self.network_notification = message
+        self.props['NetworkNotification'] = Variant('s', message)
 
     @dbus_property(access=PropertyAccess.READ)
     def NetworkNotification(self) -> 's':
-        return self.network_notification
+        return self.props['NetworkNotification'].value
 
     def save_request_received(self, message):
-        self.network_request = message
+        self.props['NetworkNotification'] = Variant('s', message)
 
     @dbus_property(access=PropertyAccess.READ)
     async def NetworkRequest(self) -> 's':
-        return self.network_request
+        return self.props['NetworkRequest'].value
