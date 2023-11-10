@@ -130,6 +130,7 @@
 		<method name="HoldAndAnswer">
 			<arg name="calls" type="ao" direction="out"/>
 		</method>
+		<method name="HangupAll"/>
 		<method name="CreateMultiparty">
 			<arg name="calls" type="ao" direction="out"/>
 		</method>

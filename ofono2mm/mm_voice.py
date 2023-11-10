@@ -2,6 +2,8 @@ from dbus_next.service import ServiceInterface, method, dbus_property, signal
 from dbus_next.constants import PropertyAccess
 from dbus_next import Variant
 
+from ofono2mm.mm_call import MMCallInterface
+
 class MMVoiceInterface(ServiceInterface):
     def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Voice')
@@ -20,32 +22,44 @@ class MMVoiceInterface(ServiceInterface):
             }
 
     @method()
-    def ListCalls(self) -> 'ao':
+    async def ListCalls(self) -> 'ao':
+        try:
+            result = await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_get_calls()
+
+            if result and isinstance(result[0], (list, tuple)) and result[0]:
+                ret = [result[0][0]]
+            else:
+                ret = []
+        except IndexError:
+            ret = []
+
+        self.props['Calls'] = Variant('ao', ret)
+        return ret
+
+    @method()
+    async def DeleteCall(self, path: 'o'):
         pass
 
     @method()
-    def DeleteCall(self, path: 'o'):
-        pass
+    async def CreateCall(self, properties: 'a{sv}') -> 'o':
+        result = await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_dial(properties['Number'].value, 'disabled')
+        return result
 
     @method()
-    def CreateCall(self, properties: 'a{sv}') -> 'o':
-        pass
+    async def HoldAndAccept(self):
+        result = await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_hold_and_answer()
 
     @method()
-    def HoldAndAccept(self):
-        pass
+    async def HangupAndAccept(self):
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_release_and_answer()
 
     @method()
-    def HangupAndAccept(self):
-        pass
+    async def HangupAll(self):
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_hangup_all()
 
     @method()
-    def HangupAll(self):
-        pass
-
-    @method()
-    def Transfer(self):
-        pass
+    async def Transfer(self):
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_transfer()
 
     @method()
     def CallWaitingSetup(self, enable: 'b'):
