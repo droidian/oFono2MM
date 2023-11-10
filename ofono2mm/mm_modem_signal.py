@@ -3,65 +3,142 @@ from dbus_next.constants import PropertyAccess
 from dbus_next import Variant
 
 class MMModemSignalInterface(ServiceInterface):
-    def __init__(self, modem):
+    def __init__(self, mm_modem, ofono_interfaces, ofono_interface_props):
         super().__init__('org.freedesktop.ModemManager1.Modem.Signal')
-        self.modem = modem
-        self.rate = 0
-        self.rssi_threshold = 0
-        self.error_rate_threshold = False
-        self.set_signal_props()
-
-    def set_signal_props(self):
-        self.signal_properties = {
-            'Cdma': Variant('a{sv}', {'rssi': Variant('d', -80), 'ecio': Variant('d', -10), 'error-rate': Variant('d', 0)}),
-            'Evdo': Variant('a{sv}', {'rssi': Variant('d', -85), 'ecio': Variant('d', -12), 'error-rate': Variant('d', 0)}),
-            'Gsm': Variant('a{sv}', {'rssi': Variant('d', -75), 'error-rate': Variant('d', 0)}),
-            'Umts': Variant('a{sv}', {'rssi': Variant('d', -70), 'error-rate': Variant('d', 0)}),
-            'Lte': Variant('a{sv}', {'rssi': Variant('d', -65), 'error-rate': Variant('d', 0)}),
-            'Nr5g': Variant('a{sv}', {'rssi': Variant('d', -60), 'error-rate': Variant('d', 0)})
+        self.mm_modem = mm_modem
+        self.ofono_interfaces = ofono_interfaces
+        self.ofono_interface_props = ofono_interface_props
+        self.props = {
+            'Rate': Variant('u', 0),
+            'RssiThreshold': Variant('u', 0),
+            'ErrorRateThreshold': Variant('b', False),
+            'Cdma': Variant('a{sv}', {
+                'rssi': Variant('d', 0),
+                'ecio': Variant('d', 0),
+                'error-rate': Variant('d', 0)
+             }),
+            'Evdo': Variant('a{sv}', {
+                'rssi': Variant('d', 0),
+                'ecio': Variant('d', 0),
+                'sinr': Variant('d', 0),
+                'io': Variant('d', 0),
+                'error-rate': Variant('d', 0)
+             }),
+            'Gsm': Variant('a{sv}', {
+                'rssi': Variant('d', 0),
+                'error-rate': Variant('d', 0)
+            }),
+            'Umts': Variant('a{sv}', {
+                'rssi': Variant('d', 0),
+                'rscp': Variant('d', 0),
+                'ecio': Variant('d', 0),
+                'error-rate': Variant('d', 0)
+            }),
+            'Lte': Variant('a{sv}', {
+                'rssi': Variant('d', 0),
+                'rsrq': Variant('d', 0),
+                'rsrp': Variant('d', 0),
+                'snr': Variant('d', 0),
+                'error-rate': Variant('d', 0)
+            }),
+            'Nr5g': Variant('a{sv}', {
+                'rsrq': Variant('d', 0),
+                'rsrp': Variant('d', 0),
+                'snr': Variant('d', 0),
+                'error-rate': Variant('d', 0)
+            })
         }
 
+    async def set_props(self):
+        if 'org.ofono.NetworkMonitor' in self.ofono_interface_props:
+            self.props['Cdma'].value['rssi'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReceivedSignalStrength'].value if "ReceivedSignalStrength" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Evdo'].value['rssi'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReceivedSignalStrength'].value if "ReceivedSignalStrength" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Gsm'].value['rssi'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReceivedSignalStrength'].value if "ReceivedSignalStrength" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Umts'].value['rssi'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReceivedSignalStrength'].value if "ReceivedSignalStrength" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Lte'].value['rssi'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReceivedSignalStrength'].value if "ReceivedSignalStrength" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+
+            self.props['Cdma'].value['error-rate'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['BitErrorRate'].value if "BitErrorRate" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Evdo'].value['error-rate'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['BitErrorRate'].value if "BitErrorRate" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Gsm'].value['error-rate'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['BitErrorRate'].value if "BitErrorRate" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Umts'].value['error-rate'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['BitErrorRate'].value if "BitErrorRate" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Lte'].value['error-rate'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['BitErrorRate'].value if "BitErrorRate" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Nr5g'].value['error-rate'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['BitErrorRate'].value if "BitErrorRate" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+
+            self.props['Lte'].value['rsrq'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReferenceSignalReceivedQuality'].value if "ReferenceSignalReceivedQuality" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Nr5g'].value['rsrq'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReferenceSignalReceivedQuality'].value if "ReferenceSignalReceivedQuality" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+
+            self.props['Lte'].value['rsrp'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReferenceSignalReceivedPower'].value if "ReferenceSignalReceivedPower" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+            self.props['Nr5g'].value['rsrp'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReferenceSignalReceivedPower'].value if "ReferenceSignalReceivedPower" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+
+            self.props['Umts'].value['rscp'] = Variant('d', self.ofono_interface_props['org.ofono.NetworkMonitor']['ReceivedSignalCodePower'].value if "ReceivedSignalCodePower" in self.ofono_interface_props['org.ofono.NetworkMonitor'] else 0)
+        else:
+            self.props['Cdma'].value['rssi'] = Variant('d', 0)
+            self.props['Evdo'].value['rssi'] = Variant('d', 0)
+            self.props['Gsm'].value['rssi'] = Variant('d', 0)
+            self.props['Umts'].value['rssi'] = Variant('d', 0)
+            self.props['Lte'].value['rssi'] = Variant('d', 0)
+
+            self.props['Cdma'].value['error-rate'] = Variant('d', 0)
+            self.props['Evdo'].value['error-rate'] = Variant('d', 0)
+            self.props['Gsm'].value['error-rate'] = Variant('d', 0)
+            self.props['Umts'].value['error-rate'] = Variant('d', 0)
+            self.props['Lte'].value['error-rate'] = Variant('d', 0)
+            self.props['Nr5g'].value['error-rate'] = Variant('d', 0)
+
+            self.props['Lte'].value['rsrq'] = Variant('d', 0)
+            self.props['Nr5g'].value['rsrq'] = Variant('d', 0)
+
+            self.props['Lte'].value['rsrp'] = Variant('d', 0)
+            self.props['Nr5g'].value['rsrp'] = Variant('d', 0)
+
+            self.props['Umts'].value['rscp'] = Variant('d', 0)
+
     @method()
-    def Setup(self, rate: 'u'):
-        self.rate = rate
+    async def Setup(self, rate: 'u'):
+        try:
+            await self.set_props()
+        except Exception as e:
+            pass
+
+        self.props['Rate'] = Variant('u', rate)
 
     @method()
     def SetupThresholds(self, settings: 'a{sv}'):
-        self.rssi_threshold = settings.get('rssi-threshold', Variant('u', 0)).value
-        self.error_rate_threshold = settings.get('error-rate-threshold', Variant('b', False)).value
+        self.props['RssiThreshold'] = Variant('u', settings.get('rssi-threshold', Variant('u', 0)).value)
+        self.props['ErrorRateThreshold'] = Variant('b', settings.get('error-rate-threshold', Variant('b', False)).value)
 
     @dbus_property(access=PropertyAccess.READ)
     def Rate(self) -> 'u':
-        return self.rate
+        return self.props['Rate'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def RssiThreshold(self) -> 'u':
-        return self.rssi_threshold
+        return self.props['RssiThreshold'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def ErrorRateThreshold(self) -> 'b':
-        return self.error_rate_threshold
+        return self.props['ErrorRateThreshold'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Cdma(self) -> 'a{sv}':
-        return self.signal_properties.get('Cdma', Variant('a{sv}', {})).value
+        return self.props['Cdma'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Evdo(self) -> 'a{sv}':
-        return self.signal_properties.get('Evdo', Variant('a{sv}', {})).value
+        return self.props['Evdo'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Gsm(self) -> 'a{sv}':
-        return self.signal_properties.get('Gsm', Variant('a{sv}', {})).value
+        return self.props['Gsm'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Umts(self) -> 'a{sv}':
-        return self.signal_properties.get('Umts', Variant('a{sv}', {})).value
+        return self.props['Umts'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Lte(self) -> 'a{sv}':
-        return self.signal_properties.get('Lte', Variant('a{sv}', {})).value
+        return self.props['Lte'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Nr5g(self) -> 'a{sv}':
-        return self.signal_properties.get('Nr5g', Variant('a{sv}', {})).value
+        return self.props['Nr5g'].value
