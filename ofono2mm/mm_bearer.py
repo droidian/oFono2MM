@@ -153,7 +153,11 @@ class MMBearerInterface(ServiceInterface):
 
     @async_retryable()
     async def doConnect(self):
-        await self.set_props()
+        try:
+            await self.set_props()
+        except Exception as e:
+            pass
+
         print("Do connect")
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
