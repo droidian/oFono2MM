@@ -545,7 +545,7 @@ class MMModemInterface(ServiceInterface):
             chosen_apn = None
             chosen_ctx_path = None
             for ctx in contexts:
-                name = ctx[1].get('Name', Variant('s', '')).value
+                name = ctx[1].get('Type', Variant('s', '')).value
                 access_point_name = ctx[1].get('AccessPointName', Variant('s', '')).value
                 if name.lower() == "internet":
                     ctx_idx += 1
