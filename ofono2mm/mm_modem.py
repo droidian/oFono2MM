@@ -365,8 +365,101 @@ class MMModemInterface(ServiceInterface):
 
         if 'org.ofono.SimManager' in self.ofono_interface_props:
             self.props['OwnNumbers'] = Variant('as', self.ofono_interface_props['org.ofono.SimManager']['SubscriberNumbers'].value if 'SubscriberNumbers' in self.ofono_interface_props['org.ofono.SimManager'] else [])
+
+            if 'Retries' in self.ofono_interface_props['org.ofono.SimManager']:
+                if 'pin' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    pin = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['pin']
+                else:
+                    pin = -1
+
+                if 'pin2' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    pin2 = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['pin2']
+                else:
+                    pin2 = -1
+
+                if 'puk' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    puk = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['puk']
+                else:
+                    puk = -1
+
+                if 'puk2' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    puk2 = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['puk2']
+                else:
+                    puk2 = -1
+
+                if 'service' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    service = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['service']
+                else:
+                    service = -1
+
+                if 'servicepuk' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    servicepuk = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['servicepuk']
+                else:
+                    servicepuk = -1
+
+                if 'network' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    network = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['network']
+                else:
+                    network = -1
+
+                if 'networkpuk' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    networkpuk = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['networkpuk']
+                else:
+                    networkpuk = -1
+
+                if 'corp' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    corp = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['corp']
+                else:
+                    corp = -1
+
+                if 'corppuk' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    corppuk = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['corppuk']
+                else:
+                    corppuk = -1
+
+                if 'netsub' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    netsub = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['netsub']
+                else:
+                    netsub = -1
+
+                if 'netsubpuk' in self.ofono_interface_props['org.ofono.SimManager']['Retries'].value:
+                    netsubpuk = self.ofono_interface_props['org.ofono.SimManager']['Retries'].value['netsubpuk']
+                else:
+                    netsubpuk = -1
+
+                unlock_retries = {}
+
+                if pin != -1:
+                    unlock_retries[2] = pin
+                if pin2 != -1:
+                    unlock_retries[3] = pin2
+                if puk != -1:
+                    unlock_retries[4] = puk
+                if puk2 != -1:
+                    unlock_retries[5] = puk2
+                if service != -1:
+                    unlock_retries[6] = service
+                if servicepuk != -1:
+                    unlock_retries[7] = servicepuk
+                if network != -1:
+                    unlock_retries[8] = network
+                if networkpuk != -1:
+                    unlock_retries[9] = networkpuk
+                if corp != -1:
+                    unlock_retries[11] = corp
+                if corppuk != -1:
+                    unlock_retries[12] = corppuk
+                if netsub != -1:
+                    unlock_retries[15] = netsub
+                if netsubpuk != -1:
+                    unlock_retries[16] = netsubpuk
+            else:
+                unlock_retries = {}
+
+            self.props['UnlockRetries'] = Variant('a{uu}', unlock_retries)
         else:
             self.props['OwnNumbers'] = Variant('as', [])
+            self.props['UnlockRetries'] = Variant('a{uu}', {})
 
         if 'org.ofono.NetworkRegistration' in self.ofono_interface_props and self.props['State'].value == 8:
             if "Technology" in self.ofono_interface_props['org.ofono.NetworkRegistration']:
