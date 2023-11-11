@@ -9,18 +9,18 @@ class MMModemSimpleInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                 'state': Variant('u', 6),
-                 'signal-quality': Variant('(ub)', [0, True]),
-                 'current-bands': Variant('au', []),
-                 'access-technologies': Variant('u', 19),
-                 'm3gpp-registration-state': Variant('u', 4),
-                 'm3gpp-operator-code': Variant('s', ''),
-                 'm3gpp-operator-name': Variant('s', ''),
-                 'cdma-cdma1x-registration-state': Variant('u', 0),
-                 'cdma-evdo-registration-state': Variant('u', 0),
-                 'cdma-sid': Variant('u', 0),
-                 'cdma-nid': Variant('u', 0)
-            }
+             'state': Variant('u', 6),
+             'signal-quality': Variant('(ub)', [0, True]),
+             'current-bands': Variant('au', []),
+             'access-technologies': Variant('u', 19),
+             'm3gpp-registration-state': Variant('u', 4),
+             'm3gpp-operator-code': Variant('s', ''),
+             'm3gpp-operator-name': Variant('s', ''),
+             'cdma-cdma1x-registration-state': Variant('u', 0),
+             'cdma-evdo-registration-state': Variant('u', 0),
+             'cdma-sid': Variant('u', 0),
+             'cdma-nid': Variant('u', 0)
+        }
 
     async def set_props(self):
         old_props = self.props.copy()

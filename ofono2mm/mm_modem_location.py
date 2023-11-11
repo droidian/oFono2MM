@@ -10,40 +10,31 @@ class MMModemLocationInterface(ServiceInterface):
     def __init__(self, modem):
         super().__init__('org.freedesktop.ModemManager1.Modem.Location')
         self.modem = modem
-
-        self.capabilities = 0
-        self.supported_assistance_data = 0
-        self.enabled = 0
-        self.signals_location = False
-        self.latitude = 0
-        self.longitude = 0
-        self.altitude = 0
         utc_time = datetime.utcnow().isoformat()
 
         self.location = {
             2: Variant('a{sv}', {
                 'utc-time': Variant('s', utc_time),
-                'latitude': Variant('d', self.latitude),
-                'longitude': Variant('d', self.longitude),
-                'altitude': Variant('d', self.altitude)
+                'latitude': Variant('d', 0),
+                'longitude': Variant('d', 0),
+                'altitude': Variant('d', 0)
             })
         }
 
-        self.supl_server = ""
-        self.assistance_data_servers = []
-        self.gps_refresh_rate = 30
+        self.props = {
+            'Capabilities': Variant('u', 0),
+            'SupportedAssistanceData': Variant('u', 0),
+            'Enabled': Variant('u', 0),
+            'SignalsLocation': Variant('b', False),
+            'SuplServer': Variant('s', ''),
+            'AssistanceDataServers': Variant('as', []),
+            'GpsRefreshRate': Variant('u', 30)
+        }
 
     @method()
     def Setup(self, sources: 'u', signal_location: 'b') -> None:
-        if sources == 1:
-            self.enabled = 1
-        else:
-            self.enabled = 0
-
-        if signal_location is True:
-            self.signals_location = True
-        else:
-            self.signals_location = False
+        self.props['Enabled'] = Variant('u', sources)
+        self.props['SignalsLocation'] = Variant('b', signal_location)
 
     @method()
     async def GetLocation(self) -> 'a{uv}':
@@ -69,7 +60,7 @@ class MMModemLocationInterface(ServiceInterface):
 
     @method()
     def SetSuplServer(self, supl: 's') -> None:
-        self.supl_server = supl
+        self.props['SuplServer'] = Variant('s', supl)
 
     @method()
     def InjectAssistanceData(self, data: 'ay') -> None:
@@ -77,23 +68,23 @@ class MMModemLocationInterface(ServiceInterface):
 
     @method()
     def SetGpsRefreshRate(self, rate: 'u') -> None:
-        self.gps_refresh_rate = rate
+        self.props['GpsRefreshRate'] = Variant('u', rate)
 
     @dbus_property(access=PropertyAccess.READ)
     def Capabilities(self) -> 'u':
-        return self.capabilities
+        return self.props['Capabilities'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def SupportedAssistanceData(self) -> 'u':
-        return self.supported_assistance_data
+        return self.props['SupportedAssistanceData'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Enabled(self) -> 'u':
-        return self.enabled
+        return self.props['Enabled'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def SignalsLocation(self) -> 'b':
-        return self.signals_location
+        return self.props['SignalsLocation'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Location(self) -> 'a{uv}':
@@ -101,12 +92,12 @@ class MMModemLocationInterface(ServiceInterface):
 
     @dbus_property(access=PropertyAccess.READ)
     def SuplServer(self) -> 's':
-        return self.supl_server
+        return self.props['SuplServer'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def AssistanceDataServers(self) -> 'as':
-        return self.assistance_data_servers
+        return self.props['AssistanceDataServers'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def GpsRefreshRate(self) -> 'u':
-        return self.gps_refresh_rate
+        return self.props['GpsRefreshRate'].value

@@ -15,14 +15,14 @@ class MMCallInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                'State': Variant('i', 0),
-                'StateReason': Variant('i', 0),
-                'Direction': Variant('i', 0),
-                'Number': Variant('s', ''),
-                'Multiparty': Variant('b', False),
-                'AudioPort': Variant('s', ''),
-                'AudioFormat': Variant('a{sv}', [])
-            }
+            'State': Variant('i', 0),
+            'StateReason': Variant('i', 0),
+            'Direction': Variant('i', 0),
+            'Number': Variant('s', ''),
+            'Multiparty': Variant('b', False),
+            'AudioPort': Variant('s', ''),
+            'AudioFormat': Variant('a{sv}', [])
+        }
 
     @method()
     def Start(self):

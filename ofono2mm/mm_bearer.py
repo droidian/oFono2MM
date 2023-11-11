@@ -28,33 +28,33 @@ class MMBearerInterface(ServiceInterface):
         self.disconnecting = False
         self.reconnect_task = None
         self.props = {
-                "Interface": Variant('s', ''),
-                "Connected": Variant('b', False),
-                "Suspended": Variant('b', False),
-                "Multiplexed": Variant('b', True),
-                "Ip4Config": Variant('a{sv}', {
-                    "method": Variant('u', 3)
-                }),
-                "Ip6Config": Variant('a{sv}', {
-                    "method": Variant('u', 3)
-                }),
-                "ReloadStatsSupported": Variant('b', False),
-                "IpTimeout": Variant('u', 0),
-                "BearerType": Variant('u', 1),
-                "Properties": Variant('a{sv}', {
-                    "apn": Variant('s', ''),
-                    "ip-type": Variant('u', 1),
-                    "apn-type": Variant('u', 2),
-                    "allowed-auth": Variant('u', 0),
-                    "user": Variant('s', ''),
-                    "password": Variant('s', ''),
-                    "access-type-preference": Variant('u', 0),
-                    "roaming-allowance": Variant('u', 0),
-                    "profile-id": Variant('i', -1),
-                    "profile-name": Variant('s', ''),
-                    "profile-enabled": Variant('b', True),
-                    "profile-source": Variant('u', 0),
-                })
+            "Interface": Variant('s', ''),
+            "Connected": Variant('b', False),
+            "Suspended": Variant('b', False),
+            "Multiplexed": Variant('b', True),
+            "Ip4Config": Variant('a{sv}', {
+                "method": Variant('u', 3)
+            }),
+            "Ip6Config": Variant('a{sv}', {
+                "method": Variant('u', 3)
+            }),
+            "ReloadStatsSupported": Variant('b', False),
+            "IpTimeout": Variant('u', 0),
+            "BearerType": Variant('u', 1),
+            "Properties": Variant('a{sv}', {
+                "apn": Variant('s', ''),
+                "ip-type": Variant('u', 1),
+                "apn-type": Variant('u', 2),
+                "allowed-auth": Variant('u', 0),
+                "user": Variant('s', ''),
+                "password": Variant('s', ''),
+                "access-type-preference": Variant('u', 0),
+                "roaming-allowance": Variant('u', 0),
+                "profile-id": Variant('i', -1),
+                "profile-name": Variant('s', ''),
+                "profile-enabled": Variant('b', True),
+                "profile-source": Variant('u', 0),
+            })
         }
 
     @dbus_property(access=PropertyAccess.READ)

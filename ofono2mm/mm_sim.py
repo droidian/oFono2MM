@@ -16,20 +16,20 @@ class MMSimInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                'Active': Variant('b', True),
-                'SimIdentifier': Variant('s', ''),
-                'IMSI': Variant('s', '0'),
-                'Eid': Variant('s', ''),
-                'OperatorIdentifier': Variant('s', '0'),
-                'OperatorName': Variant('s', ''),
-                'EmergencyNumbers': Variant('as', []),
-                'PreferredNetworks': Variant('a(su)', []),
-                'Gid1': Variant('ay', bytes()),
-                'Gid2': Variant('ay', bytes()),
-                'SimType': Variant('u', 1),
-                'EsimStatus': Variant('u', 0),
-                'Removability': Variant('u', 1)
-            }
+            'Active': Variant('b', True),
+            'SimIdentifier': Variant('s', ''),
+            'IMSI': Variant('s', '0'),
+            'Eid': Variant('s', ''),
+            'OperatorIdentifier': Variant('s', '0'),
+            'OperatorName': Variant('s', ''),
+            'EmergencyNumbers': Variant('as', []),
+            'PreferredNetworks': Variant('a(su)', []),
+            'Gid1': Variant('ay', bytes()),
+            'Gid2': Variant('ay', bytes()),
+            'SimType': Variant('u', 1),
+            'EsimStatus': Variant('u', 0),
+            'Removability': Variant('u', 1)
+        }
 
     def set_props(self):
         old_props = self.props

@@ -15,10 +15,10 @@ class MMModem3gppUssdInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                'State': Variant('u', 0),
-                'NetworkNotification': Variant('s', ''),
-                'NetworkRequest': Variant('s', ''),
-            }
+            'State': Variant('u', 0),
+            'NetworkNotification': Variant('s', ''),
+            'NetworkRequest': Variant('s', ''),
+        }
 
     @method()
     async def Initiate(self, command: 's') -> 's':

@@ -6,14 +6,15 @@ class MMModemCDMAInterface(ServiceInterface):
     def __init__(self, mm_modem):
         super().__init__('org.freedesktop.ModemManager1.Modem.ModemCdma')
         self.mm_modem = mm_modem
-
-        self.activation_state = 0
-        self.meid = ""
-        self.esn = ""
-        self.sid = 0
-        self.nid = 0
-        self.cdma1x_registration_state = 0
-        self.evdo_registration_state = 0
+        self.props = {
+            'ActivationState': Variant('u', 0),
+            'Meid': Variant('s', ''),
+            'Esn': Variant('s', ''),
+            'Sid': Variant('u', 0),
+            'Nid': Variant('u', 0),
+            'Cdma1xRegistrationState': Variant('u', 0),
+            'EvdoRegistrationState': Variant('u', 0)
+        }
 
     @method()
     def Activate(self, carrier_code: 's'):
@@ -25,28 +26,28 @@ class MMModemCDMAInterface(ServiceInterface):
 
     @dbus_property(access=PropertyAccess.READ)
     def ActivationState(self) -> 'u':
-        return self.activation_state
+        return self.props['ActivationState'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Meid(self) -> 's':
-        return self.meid
+        return self.props['Meid'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Esn(self) -> 's':
-        return self.esn
+        return self.props['Esn'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Sid(self) -> 'u':
-        return self.sid
+        return self.props['Sid'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Nid(self) -> 'u':
-        return self.nid
+        return self.props['Nid'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def Cdma1xRegistrationState(self) -> 'u':
-        return self.cdma1x_registration_state
+        return self.props['Cdma1xRegistrationState'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def EvdoRegistrationState(self) -> 'u':
-        return self.evdo_registration_state
+        return self.props['Cdma1xRegistrationState'].value

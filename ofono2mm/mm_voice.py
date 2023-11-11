@@ -17,9 +17,9 @@ class MMVoiceInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                'Calls': Variant('ao', []),
-                'EmergencyOnly': Variant('b', False),
-            }
+            'Calls': Variant('ao', []),
+            'EmergencyOnly': Variant('b', False),
+        }
 
     @method()
     async def ListCalls(self) -> 'ao':
