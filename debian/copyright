@@ -3,7 +3,9 @@ Upstream-Name: ofono2mm
 Source: https://github.com/droidian/oFono2MM
 
 Files: *
-Copyright: 2021 Erik Inkinen <erik.inkinen@gmail.com>
+Copyright: 2023 Erik Inkinen <erik.inkinen@gmail.com>
+           2023 Bardia Moshiri <fakeshell@bardia.tech>
+           2023 Droidian Project <info@droidian.org>
 License: BSD-3-clause
 
 Files: debian/*

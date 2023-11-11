@@ -16,22 +16,22 @@ class MMSmsInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-                "State": Variant('u', 0),
-                "PduType": Variant('u', 0),
-                "Number": Variant('s', ''),
-                "Text": Variant('s', ''),
-                "SMSC": Variant('s', ''),
-                "Validity": Variant('(uv)', [0, Variant('u', 0)]),
-                "Class": Variant('i', -1),
-                "TeleserviceId": Variant('u', 0),
-                "ServiceCategory": Variant('u', 0),
-                "DeliveryReportRequest": Variant('b', False),
-                "MessageReference": Variant('u', 0),
-                "Timestamp": Variant('s', ''),
-                "DischargeTimestamp": Variant('s', ''),
-                "DeliveryState": Variant('u', 0),
-                "Storage": Variant('u', 0)
-            }
+            "State": Variant('u', 0),
+            "PduType": Variant('u', 0),
+            "Number": Variant('s', ''),
+            "Text": Variant('s', ''),
+            "SMSC": Variant('s', ''),
+            "Validity": Variant('(uv)', [0, Variant('u', 0)]),
+            "Class": Variant('i', -1),
+            "TeleserviceId": Variant('u', 0),
+            "ServiceCategory": Variant('u', 0),
+            "DeliveryReportRequest": Variant('b', False),
+            "MessageReference": Variant('u', 0),
+            "Timestamp": Variant('s', ''),
+            "DischargeTimestamp": Variant('s', ''),
+            "DeliveryState": Variant('u', 0),
+            "Storage": Variant('u', 0)
+        }
 
     @dbus_property(access=PropertyAccess.READ)
     def State(self) -> 'u':

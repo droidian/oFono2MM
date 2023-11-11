@@ -1,151 +1,240 @@
 <!DOCTYPE node PUBLIC "-//freedesktop//DTD D-BUS Object Introspection 1.0//EN"
 "http://www.freedesktop.org/standards/dbus/1.0/introspect.dtd">
-<node><interface name="org.freedesktop.DBus.Introspectable"><method name="Introspect"><arg name="xml" type="s" direction="out"/>
-</method></interface><interface name="org.ofono.Manager"><method name="GetModems"><arg name="modems" type="a(oa{sv})" direction="out"/>
-</method><signal name="ModemAdded"><arg name="path" type="o"/>
-<arg name="properties" type="a{sv}"/>
-</signal>
-<signal name="ModemRemoved"><arg name="path" type="o"/>
-</signal>
-</interface><interface name="org.ofono.HandsfreeAudioManager"><method name="GetCards"><arg name="cards" type="a{oa{sv}}" direction="out"/>
-</method><method name="Register"><arg name="path" type="o" direction="in"/>
-<arg name="codecs" type="ay" direction="in"/>
-</method><method name="Unregister"><arg name="path" type="o" direction="in"/>
-</method><signal name="CardAdded"><arg name="path" type="o"/>
-<arg name="properties" type="a{sv}"/>
-</signal>
-<signal name="CardRemoved"><arg name="path" type="o"/>
-</signal>
-</interface><interface name="org.nemomobile.ofono.ModemManager"><method name="GetAll"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-</method><method name="GetAll2"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-</method><method name="GetAll3"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-<arg name="imei" type="as" direction="out"/>
-</method><method name="GetAll4"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-<arg name="imei" type="as" direction="out"/>
-<arg name="mmsSim" type="s" direction="out"/>
-<arg name="mmsModem" type="s" direction="out"/>
-</method><method name="GetAll5"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-<arg name="imei" type="as" direction="out"/>
-<arg name="mmsSim" type="s" direction="out"/>
-<arg name="mmsModem" type="s" direction="out"/>
-<arg name="ready" type="b" direction="out"/>
-</method><method name="GetAll6"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-<arg name="imei" type="as" direction="out"/>
-<arg name="mmsSim" type="s" direction="out"/>
-<arg name="mmsModem" type="s" direction="out"/>
-<arg name="ready" type="b" direction="out"/>
-<arg name="modemErrors" type="aa(si)" direction="out"/>
-</method><method name="GetAll7"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-<arg name="imei" type="as" direction="out"/>
-<arg name="mmsSim" type="s" direction="out"/>
-<arg name="mmsModem" type="s" direction="out"/>
-<arg name="ready" type="b" direction="out"/>
-<arg name="modemErrors" type="aa(si)" direction="out"/>
-<arg name="imeisv" type="as" direction="out"/>
-</method><method name="GetAll8"><arg name="version" type="i" direction="out"/>
-<arg name="availableModems" type="ao" direction="out"/>
-<arg name="enabledModems" type="ao" direction="out"/>
-<arg name="defaultDataSim" type="s" direction="out"/>
-<arg name="defaultVoiceSim" type="s" direction="out"/>
-<arg name="defaultDataModem" type="s" direction="out"/>
-<arg name="defaultVoiceModem" type="s" direction="out"/>
-<arg name="presentSims" type="ab" direction="out"/>
-<arg name="imei" type="as" direction="out"/>
-<arg name="mmsSim" type="s" direction="out"/>
-<arg name="mmsModem" type="s" direction="out"/>
-<arg name="ready" type="b" direction="out"/>
-<arg name="modemErrors" type="aa(si)" direction="out"/>
-<arg name="imeisv" type="as" direction="out"/>
-<arg name="errors" type="a(si)" direction="out"/>
-</method><method name="GetInterfaceVersion"><arg name="version" type="i" direction="out"/>
-</method><method name="GetAvailableModems"><arg name="availableModems" type="ao" direction="out"/>
-</method><method name="GetEnabledModems"><arg name="enabledModems" type="ao" direction="out"/>
-</method><method name="GetPresentSims"><arg name="presentSims" type="ab" direction="out"/>
-</method><method name="GetIMEI"><arg name="imei" type="as" direction="out"/>
-</method><method name="GetIMEISV"><arg name="imeisv" type="as" direction="out"/>
-</method><method name="GetDefaultDataSim"><arg name="defaultDataSim" type="s" direction="out"/>
-</method><method name="GetDefaultVoiceSim"><arg name="defaultVoiceSim" type="s" direction="out"/>
-</method><method name="GetMmsSim"><arg name="mmsSim" type="s" direction="out"/>
-</method><method name="GetDefaultDataModem"><arg name="defaultDataModem" type="s" direction="out"/>
-</method><method name="GetDefaultVoiceModem"><arg name="defaultVoiceModem" type="s" direction="out"/>
-</method><method name="GetMmsModem"><arg name="mmsModem" type="s" direction="out"/>
-</method><method name="GetReady"><arg name="ready" type="b" direction="out"/>
-</method><method name="GetModemErrors"><arg name="modemErrors" type="aa(si)" direction="out"/>
-</method><method name="GetErrors"><arg name="errors" type="a(si)" direction="out"/>
-</method><method name="SetEnabledModems"><arg name="modems" type="ao" direction="in"/>
-</method><method name="SetDefaultDataSim"><arg name="imsi" type="s" direction="in"/>
-</method><method name="SetDefaultVoiceSim"><arg name="imsi" type="s" direction="in"/>
-</method><method name="SetMmsSim"><arg name="imsi" type="s" direction="in"/>
-</method><signal name="EnabledModemsChanged"><arg name="enabledModems" type="ao"/>
-</signal>
-<signal name="PresentSimsChanged"><arg name="index" type="i"/>
-<arg name="present" type="b"/>
-</signal>
-<signal name="DefaultDataSimChanged"><arg name="defaultDataSim" type="s"/>
-</signal>
-<signal name="DefaultVoiceSimChanged"><arg name="defaultVoiceSim" type="s"/>
-</signal>
-<signal name="DefaultDataModemChanged"><arg name="defaultDataModem" type="s"/>
-</signal>
-<signal name="DefaultVoiceModemChanged"><arg name="defaultVoiceModem" type="s"/>
-</signal>
-<signal name="MmsSimChanged"><arg name="mmsSim" type="s"/>
-</signal>
-<signal name="MmsModemChanged"><arg name="mmsModem" type="s"/>
-</signal>
-<signal name="ReadyChanged"><arg name="ready" type="b"/>
-</signal>
-<signal name="ModemError"><arg name="path" type="o"/>
-<arg name="error_id" type="s"/>
-<arg name="message" type="s"/>
-</signal>
-</interface>
+<node>
+	<interface name="org.freedesktop.DBus.Introspectable">
+		<method name="Introspect">
+			<arg name="xml" type="s" direction="out"/>
+		</method>
+	</interface>
+
+	<interface name="org.ofono.Manager">
+		<method name="GetModems">
+			<arg name="modems" type="a(oa{sv})" direction="out"/>
+		</method>
+		<signal name="ModemAdded">
+			<arg name="path" type="o"/>
+			<arg name="properties" type="a{sv}"/>
+		</signal>
+		<signal name="ModemRemoved">
+			<arg name="path" type="o"/>
+		</signal>
+	</interface>
+
+	<interface name="org.ofono.HandsfreeAudioManager">
+		<method name="GetCards">
+			<arg name="cards" type="a{oa{sv}}" direction="out"/>
+		</method>
+		<method name="Register">
+			<arg name="path" type="o" direction="in"/>
+			<arg name="codecs" type="ay" direction="in"/>
+		</method>
+		<method name="Unregister">
+			<arg name="path" type="o" direction="in"/>
+		</method>
+		<signal name="CardAdded">
+			<arg name="path" type="o"/>
+			<arg name="properties" type="a{sv}"/>
+		</signal>
+		<signal name="CardRemoved">
+			<arg name="path" type="o"/>
+		</signal>
+	</interface>
+
+	<interface name="org.nemomobile.ofono.ModemManager">
+		<method name="GetAll">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+		</method>
+		<method name="GetAll2">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+		</method>
+		<method name="GetAll3">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+			<arg name="imei" type="as" direction="out"/>
+		</method>
+		<method name="GetAll4">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+			<arg name="imei" type="as" direction="out"/>
+			<arg name="mmsSim" type="s" direction="out"/>
+			<arg name="mmsModem" type="s" direction="out"/>
+		</method>
+		<method name="GetAll5">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+			<arg name="imei" type="as" direction="out"/>
+			<arg name="mmsSim" type="s" direction="out"/>
+			<arg name="mmsModem" type="s" direction="out"/>
+			<arg name="ready" type="b" direction="out"/>
+		</method>
+		<method name="GetAll6">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+			<arg name="imei" type="as" direction="out"/>
+			<arg name="mmsSim" type="s" direction="out"/>
+			<arg name="mmsModem" type="s" direction="out"/>
+			<arg name="ready" type="b" direction="out"/>
+			<arg name="modemErrors" type="aa(si)" direction="out"/>
+		</method>
+		<method name="GetAll7">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+			<arg name="imei" type="as" direction="out"/>
+			<arg name="mmsSim" type="s" direction="out"/>
+			<arg name="mmsModem" type="s" direction="out"/>
+			<arg name="ready" type="b" direction="out"/>
+			<arg name="modemErrors" type="aa(si)" direction="out"/>
+			<arg name="imeisv" type="as" direction="out"/>
+		</method>
+		<method name="GetAll8">
+			<arg name="version" type="i" direction="out"/>
+			<arg name="availableModems" type="ao" direction="out"/>
+			<arg name="enabledModems" type="ao" direction="out"/>
+			<arg name="defaultDataSim" type="s" direction="out"/>
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+			<arg name="defaultDataModem" type="s" direction="out"/>
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+			<arg name="presentSims" type="ab" direction="out"/>
+			<arg name="imei" type="as" direction="out"/>
+			<arg name="mmsSim" type="s" direction="out"/>
+			<arg name="mmsModem" type="s" direction="out"/>
+			<arg name="ready" type="b" direction="out"/>
+			<arg name="modemErrors" type="aa(si)" direction="out"/>
+			<arg name="imeisv" type="as" direction="out"/>
+			<arg name="errors" type="a(si)" direction="out"/>
+		</method>
+		<method name="GetInterfaceVersion">
+			<arg name="version" type="i" direction="out"/>
+		</method>
+		<method name="GetAvailableModems">
+			<arg name="availableModems" type="ao" direction="out"/>
+		</method>
+		<method name="GetEnabledModems">
+			<arg name="enabledModems" type="ao" direction="out"/>
+		</method>
+		<method name="GetPresentSims">
+			<arg name="presentSims" type="ab" direction="out"/>
+		</method>
+		<method name="GetIMEI">
+			<arg name="imei" type="as" direction="out"/>
+		</method>
+		<method name="GetIMEISV">
+			<arg name="imeisv" type="as" direction="out"/>
+		</method>
+		<method name="GetDefaultDataSim">
+			<arg name="defaultDataSim" type="s" direction="out"/>
+		</method>
+		<method name="GetDefaultVoiceSim">
+			<arg name="defaultVoiceSim" type="s" direction="out"/>
+		</method>
+		<method name="GetMmsSim">
+			<arg name="mmsSim" type="s" direction="out"/>
+		</method>
+		<method name="GetDefaultDataModem">
+			<arg name="defaultDataModem" type="s" direction="out"/>
+		</method>
+		<method name="GetDefaultVoiceModem">
+			<arg name="defaultVoiceModem" type="s" direction="out"/>
+		</method>
+		<method name="GetMmsModem">
+			<arg name="mmsModem" type="s" direction="out"/>
+		</method>
+		<method name="GetReady">
+			<arg name="ready" type="b" direction="out"/>
+		</method>
+		<method name="GetModemErrors">
+			<arg name="modemErrors" type="aa(si)" direction="out"/>
+		</method>
+		<method name="GetErrors">
+			<arg name="errors" type="a(si)" direction="out"/>
+		</method>
+		<method name="SetEnabledModems">
+			<arg name="modems" type="ao" direction="in"/>
+		</method>
+		<method name="SetDefaultDataSim">
+			<arg name="imsi" type="s" direction="in"/>
+		</method>
+		<method name="SetDefaultVoiceSim">
+			<arg name="imsi" type="s" direction="in"/>
+		</method>
+		<method name="SetMmsSim">
+			<arg name="imsi" type="s" direction="in"/>
+		</method>
+		<signal name="EnabledModemsChanged">
+			<arg name="enabledModems" type="ao"/>
+		</signal>
+		<signal name="PresentSimsChanged">
+			<arg name="index" type="i"/>
+			<arg name="present" type="b"/>
+		</signal>
+		<signal name="DefaultDataSimChanged">
+			<arg name="defaultDataSim" type="s"/>
+		</signal>
+		<signal name="DefaultVoiceSimChanged">
+			<arg name="defaultVoiceSim" type="s"/>
+		</signal>
+		<signal name="DefaultDataModemChanged">
+			<arg name="defaultDataModem" type="s"/>
+		</signal>
+		<signal name="DefaultVoiceModemChanged">
+			<arg name="defaultVoiceModem" type="s"/>
+		</signal>
+		<signal name="MmsSimChanged">
+			<arg name="mmsSim" type="s"/>
+		</signal>
+		<signal name="MmsModemChanged">
+			<arg name="mmsModem" type="s"/>
+		</signal>
+		<signal name="ReadyChanged">
+			<arg name="ready" type="b"/>
+		</signal>
+		<signal name="ModemError">
+			<arg name="path" type="o"/>
+			<arg name="error_id" type="s"/>
+			<arg name="message" type="s"/>
+		</signal>
+	</interface>
 </node>

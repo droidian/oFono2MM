@@ -6,13 +6,11 @@ from dbus_next import Variant, DBusError, BusType
 import asyncio
 
 class ObjectProxy:
-    
     def __init__(self, parent, getter, getter_args):
-        
         self.parent = parent
         self.getter = getter
         self.getter_args = getter_args
-    
+
     def get_interface(self, iface):
         return self.getter(self.parent, *self.getter_args, iface)
 
@@ -20,11 +18,10 @@ class ObjectProxy:
         return self.get_interface(iface)
 
 class CachedClient:
-    
     """
     An object that keeps dbus_next's object proxies and interfaces in
     an internal cache.
-    
+
     Objects are lazily-obtained when needed. Usage is as follows:
 
     client = CachedClient()
@@ -37,7 +34,7 @@ class CachedClient:
     def __init__(self, bus):
         """
         Initialises the class.
-        
+
         :param: bus: the bus to use.
         """
 
@@ -46,7 +43,7 @@ class CachedClient:
 
         self.bus = bus
         self.cache = {}
-        
+
         # Load introspections
         for introspection, path in self.introspections.items():
             with open(path, "r") as f:
@@ -59,8 +56,6 @@ class CachedClient:
         if not interface_hashed in self.cache:
             if not path_hashed in self.cache:
                 self.cache[path_hashed] = self.bus.get_proxy_object(self.bus_name, path, self.cache[hash(introspection)])
-
-            self.cache[interface_hashed] = self.cache[path_hashed].get_interface(interface)
 
             try:
                 self.cache[interface_hashed] = self.cache[path_hashed].get_interface(interface)

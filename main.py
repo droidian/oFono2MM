@@ -30,7 +30,10 @@ class MMInterface(ServiceInterface):
 
     @method()
     async def ScanDevices(self):
-        await self.find_ofono_modems()
+        try:
+            await self.find_ofono_modems()
+        except:
+            pass
 
     async def check_ofono_presence(self):
         dbus_iface = self.dbus_client["dbus"]["/org/freedesktop/DBus"]["org.freedesktop.DBus"]
@@ -102,8 +105,18 @@ class MMInterface(ServiceInterface):
         mm_modem_interface.set_props()
         await mm_modem_interface.init_mm_sim_interface()
         await mm_modem_interface.init_mm_3gpp_interface()
+        await mm_modem_interface.init_mm_3gpp_ussd_interface()
+        await mm_modem_interface.init_mm_3gpp_profile_manager_interface()
         await mm_modem_interface.init_mm_messaging_interface()
         await mm_modem_interface.init_mm_simple_interface()
+        await mm_modem_interface.init_mm_firmware_interface()
+        await mm_modem_interface.init_mm_time_interface()
+        await mm_modem_interface.init_mm_cdma_interface()
+        await mm_modem_interface.init_mm_sar_interface()
+        await mm_modem_interface.init_mm_oma_interface()
+        await mm_modem_interface.init_mm_signal_interface()
+        await mm_modem_interface.init_mm_location_interface()
+        await mm_modem_interface.init_mm_voice_interface()
         self.mm_modem_interfaces.append(mm_modem_interface)
         self.mm_modem_objects.append('/org/freedesktop/ModemManager1/Modem/' + str(self.i))
         self.i += 1
@@ -133,4 +146,3 @@ async def main():
     await bus.wait_for_disconnect()
 
 asyncio.run(main())
-

@@ -46,10 +46,11 @@ class MMModemMessagingInterface(ServiceInterface):
             'Text': Variant('s', msg),
             'Timestamp': props['SentTime']
         })
-        self.bus.export('/org/freedesktop/ModemManager1/SMS/' + str(message_i), mm_sms_interface)
-        self.props['Messages'].value.append('/org/freedesktop/ModemManager1/SMS/' + str(message_i))
+
+        self.bus.export(f'/org/freedesktop/ModemManager1/SMS/{message_i}', mm_sms_interface)
+        self.props['Messages'].value.append(f'/org/freedesktop/ModemManager1/SMS/{message_i}')
         self.emit_properties_changed({'Messages': self.props['Messages'].value})
-        self.Added('/org/freedesktop/ModemManager1/SMS/' + str(message_i), True)
+        self.Added(f'/org/freedesktop/ModemManager1/SMS/{message_i}', True)
         message_i += 1
 
     @method()
@@ -69,17 +70,20 @@ class MMModemMessagingInterface(ServiceInterface):
         global message_i
         if 'number' not in properties or 'text' not in properties:
             return
+
         mm_sms_interface = MMSmsInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         mm_sms_interface.props.update({
             'Text': properties['text'],
             'Number': properties['number'],
             'DeliveryReportRequest': properties['delivery-report-request'] if 'delivery-report-request' in properties else Variant('b', False)
         })
-        self.bus.export('/org/freedesktop/ModemManager1/SMS/' + str(message_i), mm_sms_interface)
-        self.props['Messages'].value.append('/org/freedesktop/ModemManager1/SMS/' + str(message_i))
+
+        self.bus.export(f'/org/freedesktop/ModemManager1/SMS/{message_i}', mm_sms_interface)
+        self.props['Messages'].value.append(f'/org/freedesktop/ModemManager1/SMS/{message_i}')
         self.emit_properties_changed({'Messages': self.props['Messages'].value})
-        self.Added('/org/freedesktop/ModemManager1/SMS/' + str(message_i), True)
+        self.Added(f'/org/freedesktop/ModemManager1/SMS/{message_i}', True)
         message_i += 1
+
         if 'org.ofono.MessageManager' in self.ofono_interfaces:
             ofono_sms_path = await self.ofono_interfaces['org.ofono.MessageManager'].call_send_message(properties['number'].value, properties['text'].value)
 
@@ -112,4 +116,5 @@ class MMModemMessagingInterface(ServiceInterface):
             if iface in self.ofono_interface_props:
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
+
         return ch

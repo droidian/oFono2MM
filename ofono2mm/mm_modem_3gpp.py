@@ -25,7 +25,12 @@ class MMModem3gppInterface(ServiceInterface):
             'EpsUeModeOperation': Variant('u', 0),
             'Pco': Variant('a(ubay)', []),
             'InitialEpsBearer': Variant('o', '/'),
-            'InitialEpsBearerSettings': Variant('a{sv}', {})
+            'InitialEpsBearerSettings': Variant('a{sv}', {}),
+            'PacketServiceState': Variant('u', 0),
+            'Nr5gRegistrationSettings': Variant('a{sv}', {
+                'mico-mode': Variant('u', 0),
+                'dtx-cycle': Variant('u', 0)
+            })
         }
 
     def set_props(self):
@@ -60,6 +65,7 @@ class MMModem3gppInterface(ServiceInterface):
         for prop in self.props:
             if self.props[prop].value != old_props[prop].value:
                 changed_props.update({ prop: self.props[prop].value })
+
         self.emit_properties_changed(changed_props)
 
     @method()
@@ -72,7 +78,7 @@ class MMModem3gppInterface(ServiceInterface):
                     pass
             return
         try:
-            ofono_operator_interface = self.ofono_client["ofono_operator"][str(self.modem_name) + "/operator/" + str(operator_id)]['org.ofono.NetworkOperator']
+            ofono_operator_interface = self.ofono_client["ofono_operator"][f"{self.modem_name}/operator/{operator_id}"]['org.ofono.NetworkOperator']
             await ofono_operator_interface.call_register()
         except DBusError:
             return
@@ -92,20 +98,50 @@ class MMModem3gppInterface(ServiceInterface):
                 mm_operator.update({'status': Variant('u', 2)})
             if ofono_operator[1]['Status'].value == "forbidden":
                 mm_operator.update({'status': Variant('u', 3)})
+
             mm_operator.update({'operator-long': ofono_operator[1]['Name']})
             mm_operator.update({'operator-short': ofono_operator[1]['Name']})
             mm_operator.update({'operator-code': Variant('s', ofono_operator[1]['MobileCountryCode'].value + ofono_operator[1]['MobileNetworkCode'].value)})
+
             current_tech = 0
             for tech in ofono_operator[1]['Technologies'].value:
+                if tech == "nr":
+                    current_tech |= 1 << 15
                 if tech == "lte":
                     current_tech |= 1 << 14
                 elif tech == "umts":
                     current_tech |= 1 << 5
                 elif tech == "gsm":
                     current_tech |= 1 << 1
+
             mm_operator.update({'access-technology': Variant('u', current_tech)})
             operators.append(mm_operator)
+
         return operators
+
+    @method()
+    async def SetEpsUeModeOperation(self) -> 'u':
+        pass
+
+    @method()
+    async def SetInitialEpsBearerSettings(self) -> 'a{sv}':
+        pass
+
+    @method()
+    async def SetNr5gRegistrationSettings(self) -> 'a{sv}':
+        pass
+
+    @method()
+    async def DisableFacilityLock(self) -> '(us)':
+        pass
+
+    @method()
+    async def SetCarrierLock(self) -> 'ay':
+        pass
+
+    @method()
+    async def SetPacketServiceState(self) -> 'u':
+        pass
 
     @dbus_property(access=PropertyAccess.READ)
     def Imei(self) -> 's':
@@ -147,6 +183,14 @@ class MMModem3gppInterface(ServiceInterface):
     def InitialEpsBearerSettings(self) -> 'a{sv}':
         return self.props['InitialEpsBearerSettings'].value
 
+    @dbus_property(access=PropertyAccess.READ)
+    def PacketServiceState(self) -> 'u':
+        return self.props['PacketServiceState'].value
+
+    @dbus_property(access=PropertyAccess.READ)
+    def Nr5gRegistrationSettings(self) -> 'a{sv}':
+        return self.props['Nr5gRegistrationSettings'].value
+
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
         self.set_props()
@@ -156,4 +200,5 @@ class MMModem3gppInterface(ServiceInterface):
             if iface in self.ofono_interface_props:
                 self.ofono_interface_props[iface][name] = varval
             self.set_props()
+
         return ch

@@ -6,6 +6,7 @@
 			<arg name="xml" type="s" direction="out"/>
 		</method>
 	</interface>
+
 	<interface name="org.ofono.ConnectionContext">
 		<method name="GetProperties">
 			<arg name="properties" type="a{sv}" direction="out"/>
