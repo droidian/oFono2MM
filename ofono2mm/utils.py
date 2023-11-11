@@ -23,7 +23,7 @@ def async_retryable(times=0):
                                     if current_try == times-1:
                                             raise
 
-                                    print("Trying again, error was %s" % e)
+                                    # print("Trying again, error was %s" % e)
                                     await asyncio.sleep(5)
 
                                     current_try += 1

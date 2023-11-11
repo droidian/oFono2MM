@@ -529,7 +529,7 @@ class MMModemInterface(ServiceInterface):
         if 'org.ofono.ConnectionManager' not in self.ofono_interfaces:
             return
 
-        print(f"docreatebearer {bearer_i}" )
+        # print(f"docreatebearer {bearer_i}" )
         mm_bearer_interface = MMBearerInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props, self)
         mm_bearer_interface.props.update({
             "Properties": Variant('a{sv}', properties)
@@ -554,10 +554,10 @@ class MMModemInterface(ServiceInterface):
                         chosen_apn = access_point_name
                         chosen_ctx_path = ctx[0]
 
-                        print(chosen_ctx_path)
+                        # print(chosen_ctx_path)
 
                 if chosen_ctx_path:
-                    print("set apn")
+                    # print("set apn")
                     chosen_ctx_interface = self.ofono_client["ofono_context"][chosen_ctx_path]['org.ofono.ConnectionContext']
                     await chosen_ctx_interface.call_set_property("Active", Variant('b', False))
                     await chosen_ctx_interface.call_set_property("AccessPointName", Variant('s', chosen_apn))
