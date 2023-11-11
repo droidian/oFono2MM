@@ -671,7 +671,7 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def SetPrimarySimSlot(self, sim_slot: 'u'):
-        pass
+        self.props['PrimarySimSlot'] = Variant('u', sim_slot)
 
     @method()
     def GetCellInfo(self) -> 'aa{sv}':
