@@ -52,15 +52,15 @@ class MMModemInterface(ServiceInterface):
             'MaxBearers': Variant('u', 4),
             'MaxActiveBearers': Variant('u', 2),
             'MaxActiveMultiplexedBearers': Variant('u', 2),
-            'Manufacturer': Variant('s', ""),
+            'Manufacturer': Variant('s', 'ofono'),
             'Model': Variant('s', ""),
             'Revision': Variant('s', '10000'),
             'CarrierConfiguration': Variant('s', ''),
             'CarrierConfigurationRevision': Variant('s', '0'),
-            'HardwareRevision': Variant('s', "1000"),
+            'HardwareRevision': Variant('s', '1000'),
             'DeviceIdentifier': Variant('s', f'ofono_{self.index}'),
             'Device': Variant('s', 'halium'),
-            'Physdev': Variant('s', "/dev/binder"),
+            'Physdev': Variant('s', '/dev/binder'),
             'Drivers': Variant('as', ['binder']),
             'Plugin': Variant('s', 'ofono2mm'),
             'PrimaryPort': Variant('s', f'ril_{self.index}'),
@@ -642,7 +642,7 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def SetCurrentCapabilities(self, capabilities: 'u'):
-        pass
+        self.props['CurrentCapabilities'] = Variant('u', capabilities)
 
     @method()
     async def SetCurrentModes(self, modes: '(uu)'):
@@ -667,7 +667,7 @@ class MMModemInterface(ServiceInterface):
 
     @method()
     def SetCurrentBands(self, bands: 'au'):
-        pass
+        self.props['CurrentBands'] = Variant('u', bands)
 
     @method()
     def SetPrimarySimSlot(self, sim_slot: 'u'):
