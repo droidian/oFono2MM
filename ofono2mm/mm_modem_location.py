@@ -22,9 +22,9 @@ class MMModemLocationInterface(ServiceInterface):
         }
 
         self.props = {
-            'Capabilities': Variant('u', 0),
-            'SupportedAssistanceData': Variant('u', 0),
-            'Enabled': Variant('u', 0),
+            'Capabilities': Variant('u', 0), # on runtime MM_MODEM_LOCATION_SOURCE_NONE
+            'SupportedAssistanceData': Variant('u', 0), # hardcoded value MM_MODEM_LOCATION_ASSISTANCE_DATA_TYPE_NONE
+            'Enabled': Variant('u', 2), # on runtime raw MM_MODEM_LOCATION_SOURCE_GPS_RAW
             'SignalsLocation': Variant('b', False),
             'SuplServer': Variant('s', ''),
             'AssistanceDataServers': Variant('as', []),

@@ -33,27 +33,27 @@ class MMBearerInterface(ServiceInterface):
             "Suspended": Variant('b', False),
             "Multiplexed": Variant('b', True),
             "Ip4Config": Variant('a{sv}', {
-                "method": Variant('u', 3)
+                "method": Variant('u', 3) # on runtime dhcp MM_BEARER_IP_METHOD_DHCP
             }),
             "Ip6Config": Variant('a{sv}', {
-                "method": Variant('u', 3)
+                "method": Variant('u', 3) # on runtime dhcp MM_BEARER_IP_METHOD_DHCP
             }),
             "ReloadStatsSupported": Variant('b', False),
             "IpTimeout": Variant('u', 0),
             "BearerType": Variant('u', 1),
             "Properties": Variant('a{sv}', {
                 "apn": Variant('s', ''),
-                "ip-type": Variant('u', 1),
-                "apn-type": Variant('u', 2),
-                "allowed-auth": Variant('u', 0),
+                "ip-type": Variant('u', 1), # hardcoded value ipv4 MM_BEARER_IP_FAMILY_IPV4
+                "apn-type": Variant('u', 2), # hardcoded value default internet MM_BEARER_APN_TYPE_DEFAULT
+                "allowed-auth": Variant('u', 0), # on runtime unknown MM_BEARER_ALLOWED_AUTH_UNKNOWN
                 "user": Variant('s', ''),
                 "password": Variant('s', ''),
-                "access-type-preference": Variant('u', 0),
-                "roaming-allowance": Variant('u', 0),
+                "access-type-preference": Variant('u', 0), # on runtime none MM_BEARER_ACCESS_TYPE_PREFERENCE_NONE
+                "roaming-allowance": Variant('u', 0), # on runtime none MM_BEARER_ROAMING_ALLOWANCE_NONE
                 "profile-id": Variant('i', -1),
                 "profile-name": Variant('s', ''),
                 "profile-enabled": Variant('b', True),
-                "profile-source": Variant('u', 0),
+                "profile-source": Variant('u', 0), # hardcoded value unknown MM_BEARER_PROFILE_SOURCE_UNKNOWN
             })
         }
 
@@ -126,13 +126,13 @@ class MMBearerInterface(ServiceInterface):
             self.props['Properties'].value['password'] = Variant('s', chosen_password if chosen_password != '' else '')
 
             if chosen_auth_method == 'none':
-                self.props['Properties'].value['allowed-auth'] = Variant('u', 1)
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 1) # none MM_BEARER_ALLOWED_AUTH_NONE
             elif chosen_auth_method == 'pap':
-                self.props['Properties'].value['allowed-auth'] = Variant('u', 2)
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 2) # pap MM_BEARER_ALLOWED_AUTH_PAP
             elif chosen_auth_method == 'chap':
-                self.props['Properties'].value['allowed-auth'] = Variant('u', 3)
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 3) # chap MM_BEARER_ALLOWED_AUTH_CHAP
             else:
-                self.props['Properties'].value['allowed-auth'] = Variant('u', 0)
+                self.props['Properties'].value['allowed-auth'] = Variant('u', 0) # unknown MM_BEARER_ALLOWED_AUTH_UNKNOWN
 
             ofono_interface = self.ofono_client["ofono_modem"][f'/ril_{self.index}']['org.ofono.ConnectionManager']
 
@@ -143,9 +143,9 @@ class MMBearerInterface(ServiceInterface):
                 roaming_allowed = connman_props.get('RoamingAllowed', Variant('b', True).value).value
 
                 if roaming_allowed == True:
-                    self.props['Properties'].value['roaming-allowance'] = Variant('u', 2)
+                    self.props['Properties'].value['roaming-allowance'] = Variant('u', 2) # roaming partner network MM_BEARER_ROAMING_ALLOWANCE_PARTNER
                 elif roaming_allowed == False:
-                    self.props['Properties'].value['roaming-allowance'] = Variant('u', 0)
+                    self.props['Properties'].value['roaming-allowance'] = Variant('u', 0) # roaming none MM_BEARER_ROAMING_ALLOWANCE_NONE
 
     @method()
     async def Connect(self):
@@ -211,12 +211,12 @@ class MMBearerInterface(ServiceInterface):
                 self.props['Interface'] = value.value['Interface']
                 self.emit_properties_changed({'Interface': value.value['Interface'].value})
                 if [value.value['Interface'].value, 2] not in self.mm_modem.props['Ports'].value:
-                    self.mm_modem.props['Ports'].value.append([value.value['Interface'].value, 2])
+                    self.mm_modem.props['Ports'].value.append([value.value['Interface'].value, 2]) # port type AT MM_MODEM_PORT_TYPE_AT
             if 'Method' in value.value:
                 if value.value['Method'].value == 'static':
-                    self.props['Ip4Config'].value['method'] = Variant('u', 2)
+                    self.props['Ip4Config'].value['method'] = Variant('u', 2) # static MM_BEARER_IP_METHOD_STATIC
                 if value.value['Method'].value == 'dhcp':
-                    self.props['Ip4Config'].value['method'] = Variant('u', 3)
+                    self.props['Ip4Config'].value['method'] = Variant('u', 3) # dhcp MM_BEARER_IP_METHOD_DHCP
             if 'Address' in value.value:
                 self.props['Ip4Config'].value['address'] = value.value['Address']
             if 'DomainNameServers' in value.value:

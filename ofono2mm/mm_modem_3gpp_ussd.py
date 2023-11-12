@@ -15,7 +15,7 @@ class MMModem3gppUssdInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-            'State': Variant('u', 0),
+            'State': Variant('u', 0), # on runtime unknown MM_MODEM_3GPP_USSD_SESSION_STATE_UNKNOWN
             'NetworkNotification': Variant('s', ''),
             'NetworkRequest': Variant('s', ''),
         }
@@ -44,18 +44,18 @@ class MMModem3gppUssdInterface(ServiceInterface):
             result_str = result['State'].value
 
             if result_str == 'idle':
-                self.props['State'] = Variant('u', 1)
+                self.props['State'] = Variant('u', 1) # idle MM_MODEM_3GPP_USSD_SESSION_STATE_IDLE
             elif result_str == "active":
-                self.props['State'] = Variant('u', 2)
+                self.props['State'] = Variant('u', 2) # active MM_MODEM_3GPP_USSD_SESSION_STATE_ACTIVE
             elif result_str == "user-response":
-                self.props['State'] = Variant('u', 3)
+                self.props['State'] = Variant('u', 3) # user response MM_MODEM_3GPP_USSD_SESSION_STATE_USER_RESPONSE
             else:
-                self.props['State'] = Variant('u', 0)
+                self.props['State'] = Variant('u', 0) # unknown MM_MODEM_3GPP_USSD_SESSION_STATE_UNKNOWN
 
             self.ofono_interfaces['org.ofono.SupplementaryServices'].on_notification_received(self.save_notification_received)
             self.ofono_interfaces['org.ofono.SupplementaryServices'].on_request_received(self.save_request_received)
         except Exception as e:
-            self.props['State'] = Variant('u', 0)
+            self.props['State'] = Variant('u', 0) # unknown MM_MODEM_3GPP_USSD_SESSION_STATE_UNKNOWN
 
         return self.props['State'].value
 

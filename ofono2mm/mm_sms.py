@@ -16,21 +16,21 @@ class MMSmsInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-            "State": Variant('u', 0),
-            "PduType": Variant('u', 0),
+            "State": Variant('u', 0), # default value unknown MM_SMS_STATE_UNKNOWN
+            "PduType": Variant('u', 0), # default value unknown MM_SMS_PDU_TYPE_UNKNOWN
             "Number": Variant('s', ''),
             "Text": Variant('s', ''),
             "SMSC": Variant('s', ''),
-            "Validity": Variant('(uv)', [0, Variant('u', 0)]),
-            "Class": Variant('i', -1),
-            "TeleserviceId": Variant('u', 0),
-            "ServiceCategory": Variant('u', 0),
+            "Validity": Variant('(uv)', [0, Variant('u', 0)]), # hardcoded value unknown MM_SMS_VALIDITY_TYPE_UNKNOWN
+            "Class": Variant('i', -1), # -1 for 3GPP2/CDMA
+            "TeleserviceId": Variant('u', 0), # hardcoded value MM_SMS_CDMA_SERVICE_CATEGORY_UNKNOWN
+            "ServiceCategory": Variant('u', 0), # hardcoded value MM_SMS_CDMA_SERVICE_CATEGORY_UNKNOWN
             "DeliveryReportRequest": Variant('b', False),
             "MessageReference": Variant('u', 0),
             "Timestamp": Variant('s', ''),
             "DischargeTimestamp": Variant('s', ''),
-            "DeliveryState": Variant('u', 0),
-            "Storage": Variant('u', 0)
+            "DeliveryState": Variant('u', 0), # hardcoded value received MM_SMS_DELIVERY_STATE_COMPLETED_RECEIVED
+            "Storage": Variant('u', 0) # hardcoded value unknown
         }
 
     @dbus_property(access=PropertyAccess.READ)

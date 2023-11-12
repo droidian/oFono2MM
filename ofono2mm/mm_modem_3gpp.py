@@ -17,19 +17,19 @@ class MMModem3gppInterface(ServiceInterface):
         self.ofono_interface_props = ofono_interface_props
         self.props = {
             'Imei': Variant('s', ''),
-            'RegistrationState': Variant('u', 0),
+            'RegistrationState': Variant('u', 0), # on runtime idle MM_MODEM_3GPP_REGISTRATION_STATE_IDLE
             'OperatorCode': Variant('s', ''),
             'OperatorName': Variant('s', ''),
-            'EnableFacilityLocks': Variant('u', 0),
-            'SubscriptionState': Variant('u', 0),
-            'EpsUeModeOperation': Variant('u', 0),
+            'EnabledFacilityLocks': Variant('u', 0), # on runtime none MM_MODEM_3GPP_FACILITY_NONE
+            'SubscriptionState': Variant('u', 0), # on runtime unknown MM_MODEM_3GPP_SUBSCRIPTION_STATE_UNKNOWN
+            'EpsUeModeOperation': Variant('u', 0), # on runtime unknown MM_MODEM_3GPP_PACKET_SERVICE_STATE_UNKNOWN
             'Pco': Variant('a(ubay)', []),
             'InitialEpsBearer': Variant('o', '/'),
             'InitialEpsBearerSettings': Variant('a{sv}', {}),
-            'PacketServiceState': Variant('u', 0),
+            'PacketServiceState': Variant('u', 0), # on runtime unknown MM_MODEM_3GPP_PACKET_SERVICE_STATE_UNKNOWN
             'Nr5gRegistrationSettings': Variant('a{sv}', {
-                'mico-mode': Variant('u', 0),
-                'dtx-cycle': Variant('u', 0)
+                'mico-mode': Variant('u', 0), # hardcoded value unknown MM_MODEM_3GPP_MICO_MODE_UNKNOWN
+                'dtx-cycle': Variant('u', 0) # hardcoded value unknown MM_MODEM_3GPP_DRX_CYCLE_UNKNOWN
             })
         }
 
@@ -40,26 +40,26 @@ class MMModem3gppInterface(ServiceInterface):
             self.props['OperatorCode'] = Variant('s', self.ofono_interface_props['org.ofono.NetworkRegistration']['MobileNetworkCode'].value if "MobileNetworkCode" in self.ofono_interface_props['org.ofono.NetworkRegistration'] else '')
             if 'Status' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
                 if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unregisered":
-                    self.props['RegistrationState'] = Variant('u', 0)
+                    self.props['RegistrationState'] = Variant('u', 0) # idle MM_MODEM_3GPP_REGISTRATION_STATE_IDLE
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "registered":
-                    self.props['RegistrationState'] = Variant('u', 1)
+                    self.props['RegistrationState'] = Variant('u', 1) # home MM_MODEM_3GPP_REGISTRATION_STATE_HOME
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "searching":
-                    self.props['RegistrationState'] = Variant('u', 2)
+                    self.props['RegistrationState'] = Variant('u', 2) # searching MM_MODEM_3GPP_REGISTRATION_STATE_SEARCHING
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "denied":
-                    self.props['RegistrationState'] = Variant('u', 3)
+                    self.props['RegistrationState'] = Variant('u', 3) # denied MM_MODEM_3GPP_REGISTRATION_STATE_DENIED
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "unknown":
-                    self.props['RegistrationState'] = Variant('u', 4)
+                    self.props['RegistrationState'] = Variant('u', 4) # unknown MM_MODEM_3GPP_REGISTRATION_STATE_UNKNOWN
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == "roaming":
-                    self.props['RegistrationState'] = Variant('u', 5)
+                    self.props['RegistrationState'] = Variant('u', 5) # MM_MODEM_3GPP_REGISTRATION_STATE_ROAMING
             else:
-                self.props['RegistrationState'] = Variant('u', 4)
+                self.props['RegistrationState'] = Variant('u', 4) # unknown MM_MODEM_3GPP_REGISTRATION_STATE_UNKNOWN
         else:
             self.props['OperatorName'] = Variant('s', '')
             self.props['OperatorCode'] = Variant('s', '')
-            self.props['RegistrationState'] = Variant('u', 4)
+            self.props['RegistrationState'] = Variant('u', 4) # unknown MM_MODEM_3GPP_REGISTRATION_STATE_UNKNOWN
 
         self.props['Imei'] = Variant('s', self.ofono_props['Serial'].value if 'Serial' in self.ofono_props else '')
-        self.props['EnableFacilityLocks'] = Variant('u', 0)
+        self.props['EnabledFacilityLocks'] = Variant('u', 0) # none MM_MODEM_3GPP_FACILITY_NONE
 
         changed_props = {}
         for prop in self.props:
@@ -160,8 +160,8 @@ class MMModem3gppInterface(ServiceInterface):
         return self.props['OperatorName'].value
 
     @dbus_property(access=PropertyAccess.READ)
-    def EnableFacilityLocks(self) -> 'u':
-        return self.props['EnableFacilityLocks'].value
+    def EnabledFacilityLocks(self) -> 'u':
+        return self.props['EnabledFacilityLocks'].value
 
     @dbus_property(access=PropertyAccess.READ)
     def SubscriptionState(self) -> 'u':

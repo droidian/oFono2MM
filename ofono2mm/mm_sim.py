@@ -26,9 +26,9 @@ class MMSimInterface(ServiceInterface):
             'PreferredNetworks': Variant('a(su)', []),
             'Gid1': Variant('ay', bytes()),
             'Gid2': Variant('ay', bytes()),
-            'SimType': Variant('u', 1),
-            'EsimStatus': Variant('u', 0),
-            'Removability': Variant('u', 1)
+            'SimType': Variant('u', 1), # hardcoded value physical MM_SIM_TYPE_PHYSICAL
+            'EsimStatus': Variant('u', 0), # hardcoded value unknown MM_SIM_ESIM_STATUS_UNKNOWN
+            'Removability': Variant('u', 1) # hardcoded value MM_SIM_REMOVABILITY_REMOVABLE
         }
 
     def set_props(self):

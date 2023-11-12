@@ -15,9 +15,9 @@ class MMCallInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-            'State': Variant('i', 0),
-            'StateReason': Variant('i', 0),
-            'Direction': Variant('i', 0),
+            'State': Variant('i', 0), # hardcoded value unknown MM_CALL_STATE_UNKNOWN
+            'StateReason': Variant('i', 0), # hardcoded value unknown MM_CALL_STATE_REASON_UNKNOWN
+            'Direction': Variant('i', 0), # hardcoded value unknown MM_CALL_DIRECTION_UNKNOWN
             'Number': Variant('s', ''),
             'Multiparty': Variant('b', False),
             'AudioPort': Variant('s', ''),

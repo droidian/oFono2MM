@@ -22,7 +22,7 @@ class MMModemMessagingInterface(ServiceInterface):
         self.props = {
             'Messages': Variant('ao', []),
             'SupportedStorages': Variant('au', []),
-            'DefaultStorage': Variant('u', 0)
+            'DefaultStorage': Variant('u', 0) # hardcoded value unknown MM_SMS_STORAGE_UNKNOWN
         }
 
     def set_props(self):
@@ -40,8 +40,8 @@ class MMModemMessagingInterface(ServiceInterface):
         global message_i
         mm_sms_interface = MMSmsInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         mm_sms_interface.props.update({
-            'State': Variant('u', 3),
-            'PduType': Variant('u', 1),
+            'State': Variant('u', 3), # hardcoded value received MM_SMS_STATE_RECEIVED
+            'PduType': Variant('u', 1), # hardcoded value deliver MM_SMS_PDU_TYPE_DELIVER
             'Number': props['Sender'],
             'Text': Variant('s', msg),
             'Timestamp': props['SentTime']

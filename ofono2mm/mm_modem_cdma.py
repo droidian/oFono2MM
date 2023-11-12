@@ -7,13 +7,13 @@ class MMModemCDMAInterface(ServiceInterface):
         super().__init__('org.freedesktop.ModemManager1.Modem.ModemCdma')
         self.mm_modem = mm_modem
         self.props = {
-            'ActivationState': Variant('u', 0),
+            'ActivationState': Variant('u', 0), # hardcoded value unknown MM_MODEM_CDMA_ACTIVATION_STATE_UNKNOWN
             'Meid': Variant('s', ''),
             'Esn': Variant('s', ''),
             'Sid': Variant('u', 0),
             'Nid': Variant('u', 0),
-            'Cdma1xRegistrationState': Variant('u', 0),
-            'EvdoRegistrationState': Variant('u', 0)
+            'Cdma1xRegistrationState': Variant('u', 0), # hardcoded value MM_MODEM_CDMA_REGISTRATION_STATE_UNKNOWN
+            'EvdoRegistrationState': Variant('u', 0) # hardcoded value MM_MODEM_CDMA_REGISTRATION_STATE_UNKNOWN
         }
 
     @method()

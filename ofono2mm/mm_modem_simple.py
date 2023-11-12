@@ -9,11 +9,11 @@ class MMModemSimpleInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-             'state': Variant('u', 6),
+             'state': Variant('u', 7), # on runtime enabled MM_MODEM_STATE_ENABLED
              'signal-quality': Variant('(ub)', [0, True]),
              'current-bands': Variant('au', []),
-             'access-technologies': Variant('u', 19),
-             'm3gpp-registration-state': Variant('u', 4),
+             'access-technologies': Variant('u', 19), # hardcoded value any MM_MODEM_ACCESS_TECHNOLOGY_ANY
+             'm3gpp-registration-state': Variant('u', 4), # hardcoded value unknown MM_MODEM_3GPP_REGISTRATION_STATE_UNKNOWN
              'm3gpp-operator-code': Variant('s', ''),
              'm3gpp-operator-name': Variant('s', ''),
              'cdma-cdma1x-registration-state': Variant('u', 0),
@@ -44,14 +44,14 @@ class MMModemSimpleInterface(ServiceInterface):
 
             if 'Status' in self.ofono_interface_props['org.ofono.NetworkRegistration']:
                 if self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'registered' or self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'roaming':
-                    self.props['state'] = Variant('u', 8)
+                    self.props['state'] = Variant('u', 9) # registered MM_MODEM_STATE_REGISTERED
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']['Status'].value == 'searching':
-                    self.props['state'] = Variant('u', 7)
+                    self.props['state'] = Variant('u', 8) # searching MM_MODEM_STATE_SEARCHING
         else:
             self.props['m3gpp-operator-name'] = Variant('s', '')
             self.props['m3gpp-operator-code'] = Variant('s', '')
             self.props['signal-quality'] = Variant('(ub)', [0, True])
-            self.props['state'] = Variant('u', 6)
+            self.props['state'] = Variant('u', 7) # enabled MM_MODEM_STATE_ENABLED
 
     @method()
     async def Connect(self, properties: 'a{sv}') -> 'o':
