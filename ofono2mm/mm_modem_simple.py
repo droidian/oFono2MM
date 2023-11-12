@@ -63,12 +63,11 @@ class MMModemSimpleInterface(ServiceInterface):
                 await self.mm_modem.bearers[b].doConnect()
                 return b
 
-        bearer = await self.mm_modem.doCreateBearer(properties)
-
         try:
+            bearer = await self.mm_modem.doCreateBearer(properties)
             await self.mm_modem.bearers[bearer].doConnect()
         except Exception as e:
-            pass
+            bearer = f'/org/freedesktop/ModemManager/Bearer/0'
 
         return bearer
 
