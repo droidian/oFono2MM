@@ -15,13 +15,13 @@ class MMCallInterface(ServiceInterface):
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
         self.props = {
-            'State': Variant('i', 0), # hardcoded value unknown MM_CALL_STATE_UNKNOWN
-            'StateReason': Variant('i', 0), # hardcoded value unknown MM_CALL_STATE_REASON_UNKNOWN
-            'Direction': Variant('i', 0), # hardcoded value unknown MM_CALL_DIRECTION_UNKNOWN
+            'State': Variant('u', 0), # hardcoded value unknown MM_CALL_STATE_UNKNOWN
+            'StateReason': Variant('u', 0), # hardcoded value unknown MM_CALL_STATE_REASON_UNKNOWN
+            'Direction': Variant('u', 0), # hardcoded value unknown MM_CALL_DIRECTION_UNKNOWN
             'Number': Variant('s', ''),
             'Multiparty': Variant('b', False),
             'AudioPort': Variant('s', ''),
-            'AudioFormat': Variant('a{sv}', [])
+            'AudioFormat': Variant('a{sv}', {})
         }
 
     @method()

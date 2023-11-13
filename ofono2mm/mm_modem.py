@@ -198,6 +198,7 @@ class MMModemInterface(ServiceInterface):
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_voice_interface)
 
         if 'org.ofono.VoiceCallManager' in self.ofono_interfaces:
+            self.mm_voice_interface.set_props()
             await self.mm_voice_interface.init_calls()
 
     async def init_mm_messaging_interface(self):

@@ -25,6 +25,13 @@ class MMVoiceInterface(ServiceInterface):
             'EmergencyOnly': Variant('b', False),
         }
 
+    def set_props(self):
+        old_props = self.props
+
+        for prop in self.props:
+            if self.props[prop].value != old_props[prop].value:
+                self.emit_properties_changed({prop: self.props[prop].value})
+
     async def init_calls(self):
         if 'org.ofono.VoiceCallManager' in self.ofono_interfaces:
             self.ofono_interfaces['org.ofono.VoiceCallManager'].on_call_added(self.add_call)
@@ -34,14 +41,29 @@ class MMVoiceInterface(ServiceInterface):
 
     async def add_call(self, path, props):
         global call_i
-        # TODO: init mm_call and set props then export the bus
-        # for now we just want to know if a call has coming through or not
-        self.CallAdded(path)
+        mm_call_interface = MMCallInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        mm_call_interface.props.update({
+            'State': Variant('u', 3),
+            'StateReason': Variant('u', 2),
+            'Direction': Variant('u', 1),
+            'Number': Variant('s', props['LineIdentification'].value),
+            'Multiparty': props['Multiparty'],
+        })
+
+        self.bus.export(f'/org/freedesktop/ModemManager1/Call/{call_i}', mm_call_interface)
+        self.props['Calls'].value.append(f'/org/freedesktop/ModemManager1/Call/{call_i}')
+        self.emit_properties_changed({'Calls': self.props['Calls'].value})
+        self.CallAdded(f'/org/freedesktop/ModemManager1/Call/{call_i}')
         call_i += 1
 
     async def remove_call(self, path):
-        # TODO: delete and unexport the object. not needed for now
-        self.CallDeleted(path)
+        global call_i
+
+        call_i -= 1
+        self.props['Calls'].value.remove(f'/org/freedesktop/ModemManager1/Call/{call_i}')
+        self.bus.unexport(f'/org/freedesktop/ModemManager1/Call/{call_i}')
+        self.emit_properties_changed({'Calls': self.props['Calls'].value})
+        self.CallDeleted(f'/org/freedesktop/ModemManager1/Call/{call_i}')
 
         # print(f"call deleted: {path}")
         if 'org.ofono.ConnectionManager' in self.ofono_interfaces:
@@ -87,7 +109,11 @@ class MMVoiceInterface(ServiceInterface):
 
     @method()
     async def DeleteCall(self, path: 'o'):
-        pass
+        if path in self.props['Calls'].value:
+            self.props['Calls'].value.remove(path)
+            self.bus.unexport(path)
+            self.emit_properties_changed({'Calls': self.props['Calls'].value})
+            self.CallDeleted(path)
 
     @method()
     async def CreateCall(self, properties: 'a{sv}') -> 'o':
