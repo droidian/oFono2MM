@@ -17,7 +17,7 @@ from ofono2mm.mm_modem_signal import MMModemSignalInterface
 from ofono2mm.mm_modem_location import MMModemLocationInterface
 from ofono2mm.mm_sim import MMSimInterface
 from ofono2mm.mm_bearer import MMBearerInterface
-from ofono2mm.mm_voice import MMVoiceInterface
+from ofono2mm.mm_modem_voice import MMModemVoiceInterface
 
 import asyncio
 
@@ -194,12 +194,12 @@ class MMModemInterface(ServiceInterface):
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_location_interface)
 
     async def init_mm_voice_interface(self):
-        self.mm_voice_interface = MMVoiceInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
-        self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_voice_interface)
+        self.mm_modem_voice_interface = MMModemVoiceInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
+        self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_voice_interface)
 
         if 'org.ofono.VoiceCallManager' in self.ofono_interfaces:
-            self.mm_voice_interface.set_props()
-            await self.mm_voice_interface.init_calls()
+            self.mm_modem_voice_interface.set_props()
+            await self.mm_modem_voice_interface.init_calls()
 
     async def init_mm_messaging_interface(self):
         self.mm_modem_messaging_interface = MMModemMessagingInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)

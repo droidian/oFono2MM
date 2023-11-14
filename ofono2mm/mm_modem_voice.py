@@ -8,9 +8,9 @@ import time
 
 call_i = 1
 
-class MMVoiceInterface(ServiceInterface):
+class MMModemVoiceInterface(ServiceInterface):
     def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props):
-        super().__init__('org.freedesktop.ModemManager1.Voice')
+        super().__init__('org.freedesktop.ModemManager1.Modem.Voice')
         self.index = index
         self.bus = bus
         self.ofono_client = ofono_client
