@@ -44,13 +44,14 @@ class MMModemVoiceInterface(ServiceInterface):
             global call_i
             mm_call_interface = MMCallInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
             mm_call_interface.props.update({
-                'State': Variant('u', 3),
-                'StateReason': Variant('u', 2),
-                'Direction': Variant('u', 1),
+                'State': Variant('u', 3), # ringing in MM_CALL_STATE_RINGING_IN
+                'StateReason': Variant('u', 2), # incoming new MM_CALL_STATE_REASON_INCOMING_NEW
+                'Direction': Variant('u', 1), # incoming MM_CALL_DIRECTION_INCOMING
                 'Number': Variant('s', props['LineIdentification'].value),
                 'Multiparty': props['Multiparty'],
             })
 
+            mm_call_interface.voicecall = path
             self.bus.export(f'/org/freedesktop/ModemManager1/Call/{call_i}', mm_call_interface)
             self.props['Calls'].value.append(f'/org/freedesktop/ModemManager1/Call/{call_i}')
             self.emit_properties_changed({'Calls': self.props['Calls'].value})
@@ -116,9 +117,9 @@ class MMModemVoiceInterface(ServiceInterface):
 
         mm_call_interface = MMCallInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         mm_call_interface.props.update({
-            'State': Variant('u', 2),
-            'StateReason': Variant('u', 1),
-            'Direction': Variant('u', 2),
+            'State': Variant('u', 2), # ringing out MM_CALL_STATE_RINGING_OUT
+            'StateReason': Variant('u', 1), # outgoing started MM_CALL_STATE_REASON_OUTGOING_STARTED
+            'Direction': Variant('u', 2), # outgoing MM_CALL_DIRECTION_OUTGOING
             'Number': Variant('s', properties['number'].value),
         })
 
