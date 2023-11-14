@@ -1,4 +1,4 @@
-from dbus_next.service import (ServiceInterface,
+from dbus_next.service import (ServiceInterface, method,
                                dbus_property)
 from dbus_next.constants import PropertyAccess
 from dbus_next import Variant
@@ -32,6 +32,14 @@ class MMSmsInterface(ServiceInterface):
             "DeliveryState": Variant('u', 0), # hardcoded value received MM_SMS_DELIVERY_STATE_COMPLETED_RECEIVED
             "Storage": Variant('u', 0) # hardcoded value unknown
         }
+
+    @method()
+    def Send(self):
+        pass
+
+    @method()
+    def Store(self, storage: 'u'):
+        pass
 
     @dbus_property(access=PropertyAccess.READ)
     def State(self) -> 'u':
