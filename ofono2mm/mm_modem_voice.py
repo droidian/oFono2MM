@@ -174,3 +174,15 @@ class MMModemVoiceInterface(ServiceInterface):
     @dbus_property(access=PropertyAccess.READ)
     def EmergencyOnly(self) -> 'b':
         return self.props['EmergencyOnly'].value
+
+    def ofono_changed(self, name, varval):
+        self.ofono_props[name] = varval
+        self.set_props()
+
+    def ofono_interface_changed(self, iface):
+        def ch(name, varval):
+            if iface in self.ofono_interface_props:
+                self.ofono_interface_props[iface][name] = varval
+            self.set_props()
+
+        return ch
