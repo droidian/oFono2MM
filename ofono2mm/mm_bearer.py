@@ -130,7 +130,7 @@ class MMBearerInterface(ServiceInterface):
             else:
                 self.props['Properties'].value['allowed-auth'] = Variant('u', 0) # unknown MM_BEARER_ALLOWED_AUTH_UNKNOWN
 
-            ofono_interface = self.ofono_client["ofono_modem"][f'/ril_{self.index}']['org.ofono.ConnectionManager']
+            ofono_interface = self.ofono_client["ofono_modem"][self.modem_name]['org.ofono.ConnectionManager']
 
             roaming_allowed = None
             connman_props = await ofono_interface.call_get_properties()

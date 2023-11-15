@@ -53,18 +53,18 @@ class MMModemInterface(ServiceInterface):
             'MaxActiveBearers': Variant('u', 2),
             'MaxActiveMultiplexedBearers': Variant('u', 2),
             'Manufacturer': Variant('s', 'ofono'),
-            'Model': Variant('s', ""),
+            'Model': Variant('s', ''),
             'Revision': Variant('s', '10000'),
             'CarrierConfiguration': Variant('s', ''),
             'CarrierConfigurationRevision': Variant('s', '0'),
             'HardwareRevision': Variant('s', '1000'),
-            'DeviceIdentifier': Variant('s', f'ofono_{self.index}'),
-            'Device': Variant('s', 'halium'),
+            'DeviceIdentifier': Variant('s', self.modem_name),
+            'Device': Variant('s', self.modem_name),
             'Physdev': Variant('s', '/dev/binder'),
             'Drivers': Variant('as', ['binder']),
             'Plugin': Variant('s', 'ofono2mm'),
-            'PrimaryPort': Variant('s', f'ril_{self.index}'),
-            'Ports': Variant('a(su)', [[f'ril_{self.index}', 0]]), # on runtime none MM_MODEM_FIRMWARE_UPDATE_METHOD_NONE
+            'PrimaryPort': Variant('s', self.modem_name),
+            'Ports': Variant('a(su)', [[self.modem_name, 0]]), # on runtime unknown MM_MODEM_PORT_TYPE_UNKNOWN
             'EquipmentIdentifier': Variant('s', ''),
             'UnlockRequired': Variant('u', 0), # on runtime unknown MM_MODEM_LOCK_UNKNOWN
             'UnlockRetries': Variant('a{uu}', {}),
