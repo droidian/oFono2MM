@@ -118,7 +118,7 @@ class MMModemVoiceInterface(ServiceInterface):
         mm_call_interface = MMCallInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         mm_call_interface.props.update({
             'State': Variant('u', 2), # ringing out MM_CALL_STATE_RINGING_OUT
-            'StateReason': Variant('u', 1), # outgoing started MM_CALL_STATE_REASON_OUTGOING_STARTED
+            'StateReason': Variant('u', 0), # outgoing started MM_CALL_STATE_REASON_UNKNOWN
             'Direction': Variant('u', 2), # outgoing MM_CALL_DIRECTION_OUTGOING
             'Number': Variant('s', properties['number'].value),
         })
