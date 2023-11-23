@@ -94,7 +94,10 @@ class MMInterface(ServiceInterface):
                 self.ofono_added()
 
     def ofono_modem_added(self, path, mprops):
-        self.loop.create_task(self.export_new_modem(path, props))
+        try:
+            self.loop.create_task(self.export_new_modem(path, props))
+        except Exception as e:
+            pass
 
     async def export_new_modem(self, path, mprops):
         mm_modem_interface = MMModemInterface(self.loop, self.i, self.bus, self.ofono_client, path)
