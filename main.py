@@ -126,8 +126,11 @@ class MMInterface(ServiceInterface):
 
     def ofono_modem_removed(self, path):
         for mm_object in self.mm_modem_objects:
-            if mm_object.modem_name == path:
-                self.bus.unexport(mm_object)
+            try:
+                if mm_object.modem_name == path:
+                    self.bus.unexport(mm_object)
+            except Exception as e:
+                pass
 
     @method()
     def SetLogging(self, level: 's'):
