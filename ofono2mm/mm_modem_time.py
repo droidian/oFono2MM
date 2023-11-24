@@ -29,7 +29,7 @@ class MMModemTimeInterface(ServiceInterface):
     @method()
     async def GetNetworkTime(self) -> 's':
         if 'org.ofono.NetworkTime' in self.ofono_interfaces:
-            ofono_interface = self.ofono_client["ofono_modem"][f'/ril_{self.index}']['org.ofono.NetworkTime']
+            ofono_interface = self.ofono_client["ofono_modem"][self.modem_name]['org.ofono.NetworkTime']
             output = await ofono_interface.call_get_network_time()
 
             if 'UTC' in output:

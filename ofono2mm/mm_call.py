@@ -14,43 +14,60 @@ class MMCallInterface(ServiceInterface):
         self.ofono_props = ofono_props
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
+        self.voicecall = '/'
         self.props = {
-            'State': Variant('i', 0),
-            'StateReason': Variant('i', 0),
-            'Direction': Variant('i', 0),
+            'State': Variant('u', 0), # on runtime unknown MM_CALL_STATE_UNKNOWN
+            'StateReason': Variant('u', 0), # on runtime unknown MM_CALL_STATE_REASON_UNKNOWN
+            'Direction': Variant('u', 0), # on runtime unknown MM_CALL_DIRECTION_UNKNOWN
             'Number': Variant('s', ''),
             'Multiparty': Variant('b', False),
             'AudioPort': Variant('s', ''),
-            'AudioFormat': Variant('a{sv}', [])
+            'AudioFormat': Variant('a{sv}', {
+                "encoding": Variant('s', 'pcm'),
+                "resolution": Variant('s', 's16le'),
+                "rate": Variant('u', 48000),
+            })
         }
 
     @method()
     def Start(self):
-        pass
+        self.props['State'] = Variant('u', 4) # active MM_CALL_STATE_ACTIVE
+        self.props['StateReason'] = Variant('u', 1) # accepted MM_CALL_STATE_REASON_OUTGOING_STARTED
 
     @method()
-    def Accept(self):
-        pass
+    async def Accept(self):
+        ofono_interface = self.ofono_client["ofono_modem"][self.voicecall]['org.ofono.VoiceCall']
+        await ofono_interface.call_answer()
+        self.props['State'] = Variant('u', 4) # active MM_CALL_STATE_ACTIVE
+        self.props['StateReason'] = Variant('u', 3) # accepted MM_CALL_STATE_REASON_ACCEPTED
 
     @method()
-    def Deflect(self, number: 's'):
-        pass
+    async def Deflect(self, number: 's'):
+        ofono_interface = self.ofono_client["ofono_modem"][self.voicecall]['org.ofono.VoiceCall']
+        await ofono_interface.call_deflect(number)
+        self.props['StateReason'] = Variant('u', 10) # deflected MM_CALL_STATE_REASON_DEFLECTED
 
     @method()
-    def JoinMultiparty(self):
-        pass
+    async def JoinMultiparty(self):
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_create_multiparty()
+        self.props['Multiparty'] = Variant('b', True)
 
     @method()
-    def LeaveMultiparty(self):
-        pass
+    async def LeaveMultiparty(self):
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_hangup_multiparty()
+        self.props['Multiparty'] = Variant('b', False)
 
     @method()
-    def Hangup(self):
-        pass
+    async def Hangup(self):
+        # ofono_interface = self.ofono_client["ofono_modem"][self.voicecall]['org.ofono.VoiceCall']
+        # await ofono_interface.call_hangup()
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_hangup_all()
+        self.props['State'] = Variant('u', 7) # terminated MM_CALL_STATE_TERMINATED
+        self.props['StateReason'] = Variant('u', 4) # terminated MM_CALL_STATE_REASON_TERMINATED
 
     @method()
-    def SendDtmf(self, dtmf: 's'):
-        pass
+    async def SendDtmf(self, dtmf: 's'):
+        await self.ofono_interfaces['org.ofono.VoiceCallManager'].call_send_tones(dtmf)
 
     @signal()
     def DtmfReceived(self, dtmf) -> 's':

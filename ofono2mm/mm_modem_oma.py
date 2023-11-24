@@ -9,8 +9,8 @@ class MMModemOmaInterface(ServiceInterface):
         self.props = {
             'Features': Variant('u', 0),
             'PendingNetworkInitiatedSessions': Variant('a(uu)', []),
-            'SessionType': Variant('u', 0),
-            'SessionState': Variant('i', 0)
+            'SessionType': Variant('u', 0), # on runtime unknown MM_OMA_SESSION_TYPE_UNKNOWN
+            'SessionState': Variant('i', 0) # hardcoded value unknown MM_OMA_SESSION_STATE_UNKNOWN
         }
 
     @method()

@@ -55,7 +55,7 @@ class MMModem3gppProfileManagerInterface(ServiceInterface):
         if "roaming-allowance" in requested_properties:
             roaming_value_variant = requested_properties["roaming-allowance"]
             roaming_allowed = roaming_value_variant.value != 0
-            ofono_interface = self.ofono_client["ofono_modem"][f'/ril_{self.index}']['org.ofono.ConnectionManager']
+            ofono_interface = self.ofono_client["ofono_modem"][self.modem_name]['org.ofono.ConnectionManager']
             await ofono_interface.call_set_property("RoamingAllowed", Variant('b', roaming_allowed))
 
         return stored_properties

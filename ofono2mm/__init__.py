@@ -13,7 +13,7 @@ from .mm_sim import *
 from .mm_bearer import *
 from .mm_sms import *
 from .mm_call import *
-from .mm_voice import *
+from .mm_modem_voice import *
 from .ofono import *
 
 __all__ = [
@@ -34,6 +34,6 @@ __all__ = [
 	"MMBearerInterface",
 	"MMSmsInterface",
 	"MMCallInterface",
-	"MMVoiceInterface",
+	"MMModemVoiceInterface",
 	"Ofono",
 ]
