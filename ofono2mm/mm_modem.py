@@ -36,7 +36,7 @@ class MMModemInterface(ServiceInterface):
         self.ofono_props = {}
         self.ofono_interfaces = {}
         self.ofono_interface_props = {}
-        self.mm_cell_type = 0
+        self.mm_cell_type = 0 # on runtime unknown MM_CELL_TYPE_UNKNOWN
         self.mm_modem3gpp_interface = False
         self.mm_modem_messaging_interface = False
         self.mm_sim_interface = False
@@ -172,6 +172,9 @@ class MMModemInterface(ServiceInterface):
     async def init_mm_time_interface(self):
         self.mm_modem_time_interface = MMModemTimeInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_time_interface)
+
+        if 'org.ofono.NetworkTime' in self.ofono_interfaces:
+            await self.mm_modem_time_interface.init_time()
 
     async def init_mm_cdma_interface(self):
         self.mm_modem_cdma_interface = MMModemCDMAInterface(self)
@@ -473,16 +476,31 @@ class MMModemInterface(ServiceInterface):
                 current_tech = 0
                 if self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "nr":
                     current_tech |= 1 << 15 # network is 5g MM_MODEM_ACCESS_TECHNOLOGY_5GNR
-                    self.mm_cell_type = 6
+                    self.mm_cell_type = 6 # cell type is 5g MM_CELL_TYPE_5GNR
                 elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "lte":
                     current_tech |= 1 << 14 # network is lte MM_MODEM_ACCESS_TECHNOLOGY_LTE
-                    self.mm_cell_type = 5
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hspa" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hsdpa" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hsupa":
+                    self.mm_cell_type = 5 # cell type is lte MM_CELL_TYPE_LTE
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hspa":
+                    current_tech |= 1 << 8 # network is hspa MM_MODEM_ACCESS_TECHNOLOGY_HSPA
+                    self.mm_cell_type = 3 # cell type is umts MM_CELL_TYPE_UMTS
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hsupa":
+                    current_tech |= 1 << 7 # network is hsupa MM_MODEM_ACCESS_TECHNOLOGY_HSUPA
+                    self.mm_cell_type = 3 # cell type is umts MM_CELL_TYPE_UMTS
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "hsdpa":
+                    current_tech |= 1 << 6 # network is hsdpa MM_MODEM_ACCESS_TECHNOLOGY_HSDPA
+                    self.mm_cell_type = 3 # cell type is umts MM_CELL_TYPE_UMTS
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "umts":
                     current_tech |= 1 << 5 # network is umts MM_MODEM_ACCESS_TECHNOLOGY_UMTS
-                    self.mm_cell_type = 3
-                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "edge" or self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gprs":
+                    self.mm_cell_type = 3 # cell type is umts MM_CELL_TYPE_UMTS
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "edge":
+                    current_tech |= 1 << 4 # network is gsm MM_MODEM_ACCESS_TECHNOLOGY_GSM
+                    self.mm_cell_type = 2 # cell type is gsm MM_CELL_TYPE_GSM
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gprs":
+                    current_tech |= 1 << 3 # network is gsm MM_MODEM_ACCESS_TECHNOLOGY_GSM
+                    self.mm_cell_type = 2 # cell type is gsm MM_CELL_TYPE_GSM
+                elif self.ofono_interface_props['org.ofono.NetworkRegistration']["Technology"].value == "gsm":
                     current_tech |= 1 << 1 # network is gsm MM_MODEM_ACCESS_TECHNOLOGY_GSM
-                    self.mm_cell_type = 2
+                    self.mm_cell_type = 2 # cell type is gsm MM_CELL_TYPE_GSM
 
                 self.props['AccessTechnologies'] = Variant('u', current_tech)
             else:
