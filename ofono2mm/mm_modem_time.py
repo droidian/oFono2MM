@@ -22,6 +22,21 @@ class MMModemTimeInterface(ServiceInterface):
             'leap-seconds': Variant('i', 0)
         }
 
+    async def init_time(self):
+        if 'org.ofono.NetworkTime' in self.ofono_interfaces:
+            self.ofono_interfaces['org.ofono.NetworkTime'].on_network_time_changed(self.update_time)
+
+    async def update_time(self, time):
+        # print(time)
+        utc_time = time['UTC'].value
+        network_time = datetime.fromtimestamp(utc_time, tz=timezone.utc)
+        self.network_time = network_time.isoformat()
+
+        timezone_offset = time['Timezone'].value // 60
+        dst_offset = time['DST'].value // 60
+
+        self.update_network_timezone(timezone_offset, dst_offset, 0)
+
     @dbus_property(access=PropertyAccess.READ)
     def NetworkTimezone(self) -> 'a{sv}':
         return self.network_timezone
@@ -50,6 +65,7 @@ class MMModemTimeInterface(ServiceInterface):
 
     @signal()
     def NetworkTimeChanged(self, time: 's') -> 's':
+        # print(time)
         self.network_time = time
         return time
 

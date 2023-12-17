@@ -173,6 +173,9 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem_time_interface = MMModemTimeInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_time_interface)
 
+        if 'org.ofono.NetworkTime' in self.ofono_interfaces:
+            await self.mm_modem_time_interface.init_time()
+
     async def init_mm_cdma_interface(self):
         self.mm_modem_cdma_interface = MMModemCDMAInterface(self)
         self.bus.export(f'/org/freedesktop/ModemManager1/Modem/{self.index}', self.mm_modem_cdma_interface)
