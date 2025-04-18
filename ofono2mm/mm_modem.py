@@ -100,8 +100,6 @@ class MMModemInterface(ServiceInterface):
         for iface in self.ofono_props['Interfaces'].value:
             await self.add_ofono_interface(iface)
 
-        await self.check_ofono_contexts()
-
     async def add_ofono_interface(self, iface):
         self.ofono_interfaces.update({
             iface: self.ofono_proxy[iface]
@@ -161,6 +159,7 @@ class MMModemInterface(ServiceInterface):
         self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
         self.bus.export(f'/org/freedesktop/ModemManager/SIM/{self.index}', self.mm_sim_interface)
         self.mm_sim_interface.set_props()
+        await self.check_ofono_contexts()
 
     async def init_mm_3gpp_interface(self):
         self.mm_modem3gpp_interface = MMModem3gppInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
@@ -230,6 +229,9 @@ class MMModemInterface(ServiceInterface):
     async def check_ofono_contexts(self):
         global bearer_i
         if not 'org.ofono.ConnectionManager' in self.ofono_interfaces:
+            return
+
+        if self.mm_sim_interface is None or not self.mm_sim_interface.present or self.mm_sim_interface.locked:
             return
 
         contexts = await self.ofono_interfaces['org.ofono.ConnectionManager'].call_get_contexts();
