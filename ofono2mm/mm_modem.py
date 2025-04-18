@@ -52,9 +52,9 @@ class MMModemInterface(ServiceInterface):
         self.ofono_interfaces = {}
         self.ofono_interface_props = {}
         self.mm_cell_type = ModemManagerCellType.UNKNOWN
-        self.mm_modem3gpp_interface = False
-        self.mm_modem_messaging_interface = False
-        self.mm_sim_interface = False
+        self.mm_modem3gpp_interface = None
+        self.mm_modem_messaging_interface = None
+        self.mm_sim_interface = None
         self.sim = Variant('o', f'/org/freedesktop/ModemManager/SIM/{self.index}')
         self.bearers = {}
         self.props = {
@@ -112,9 +112,9 @@ class MMModemInterface(ServiceInterface):
                 iface: await self.ofono_interfaces[iface].call_get_properties()
             })
 
-            if self.mm_modem3gpp_interface:
+            if self.mm_modem3gpp_interface is not None:
                 self.mm_modem3gpp_interface.ofono_interface_props = self.ofono_interface_props.copy()
-            if self.mm_sim_interface:
+            if self.mm_sim_interface is not None:
                 self.mm_sim_interface.ofono_interface_props = self.ofono_interface_props.copy()
 
             self.ofono_interfaces[iface].on_property_changed(self.ofono_interface_changed(iface))
@@ -123,20 +123,20 @@ class MMModemInterface(ServiceInterface):
                 iface: {}
             })
 
-            if self.mm_modem3gpp_interface:
+            if self.mm_modem3gpp_interface is not None:
                 self.mm_modem3gpp_interface.ofono_interface_props = self.ofono_interface_props.copy()
-            if self.mm_sim_interface:
+            if self.mm_sim_interface is not None:
                 self.mm_sim_interface.ofono_interface_props = self.ofono_interface_props.copy()
 
             self.ofono_interfaces[iface].on_property_changed(self.ofono_interface_changed(iface))
         except AttributeError:
             pass
 
-        if self.mm_modem3gpp_interface:
+        if self.mm_modem3gpp_interface is not None:
             self.mm_modem3gpp_interface.set_props()
-        if self.mm_sim_interface:
+        if self.mm_sim_interface is not None:
             self.mm_sim_interface.set_props()
-        if self.mm_modem_messaging_interface and iface == "org.ofono.MessageManager":
+        if self.mm_modem_messaging_interface is not None and iface == "org.ofono.MessageManager":
             self.mm_modem_messaging_interface.set_props()
             await self.mm_modem_messaging_interface.init_messages()
         if iface == "org.ofono.ConnectionManager":
@@ -150,10 +150,10 @@ class MMModemInterface(ServiceInterface):
 
         self.set_props()
 
-        if self.mm_modem3gpp_interface:
+        if self.mm_modem3gpp_interface is not None:
             self.mm_modem3gpp_interface.ofono_interface_props = self.ofono_interface_props.copy()
             self.mm_modem3gpp_interface.set_props()
-        if self.mm_sim_interface:
+        if self.mm_sim_interface is not None:
             self.mm_sim_interface.ofono_interface_props = self.ofono_interface_props.copy()
             self.mm_sim_interface.set_props()
 
@@ -872,9 +872,9 @@ class MMModemInterface(ServiceInterface):
                     self.loop.create_task(self.remove_ofono_interface(iface))
 
         self.set_props()
-        if self.mm_modem3gpp_interface:
+        if self.mm_modem3gpp_interface is not None:
             self.mm_modem3gpp_interface.ofono_changed(name, varval)
-        if self.mm_sim_interface:
+        if self.mm_sim_interface is not None:
             self.mm_sim_interface.ofono_changed(name, varval)
 
     def ofono_interface_changed(self, iface):
@@ -882,9 +882,9 @@ class MMModemInterface(ServiceInterface):
             if iface in self.ofono_interface_props:
                 self.ofono_interface_props[iface][name] = varval
                 self.set_props()
-                if self.mm_modem3gpp_interface:
+                if self.mm_modem3gpp_interface is not None:
                     self.mm_modem3gpp_interface.ofono_interface_changed(iface)(name, varval)
-                if self.mm_sim_interface:
+                if self.mm_sim_interface is not None:
                     self.mm_sim_interface.ofono_interface_changed(iface)(name, varval)
 
         return ch
