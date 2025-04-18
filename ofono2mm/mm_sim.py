@@ -157,6 +157,32 @@ class MMSimInterface(ServiceInterface):
     def Removability(self) -> 'u':
         return self.props['Removability'].value
 
+    @property
+    def available(self):
+        return 'org.ofono.SimManager' in self.ofono_interfaces
+
+    @property
+    def present(self):
+        if not self.available:
+            return False
+
+        sim_manager = self.ofono_interface_props['org.ofono.SimManager']
+        if 'Present' not in sim_manager:
+            return False
+
+        return self.ofono_interface_props['org.ofono.SimManager']['Present'].value
+
+    @property
+    def locked(self):
+        if not self.available:
+            return False
+
+        sim_manager = self.ofono_interface_props['org.ofono.SimManager']
+        if 'PinRequired' not in sim_manager:
+            return False
+
+        return sim_manager['PinRequired'].value != 'none'
+
     def ofono_changed(self, name, varval):
         self.ofono_props[name] = varval
         self.set_props()
