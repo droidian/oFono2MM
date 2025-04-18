@@ -89,6 +89,10 @@ class MMModem3gppInterface(ServiceInterface):
     @method()
     async def Scan(self) -> 'aa{sv}':
         operators = []
+
+        if 'org.ofono.NetworkRegistration' not in self.ofono_interfaces:
+            return []
+
         ofono_operators = await self.ofono_interfaces['org.ofono.NetworkRegistration'].call_scan()
         for ofono_operator in ofono_operators:
             mm_operator = {}
