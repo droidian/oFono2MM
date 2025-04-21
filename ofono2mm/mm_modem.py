@@ -616,13 +616,14 @@ class MMModemInterface(ServiceInterface):
         await ofono_ctx_interface.call_set_property("Protocol", Variant('s', 'ip'))
         mm_bearer_interface.ofono_ctx = ofono_ctx
         ofono_ctx_interface.on_property_changed(self.ofono_context_changed)
-        self.bus.export(f'/org/freedesktop/ModemManager/Bearer/{bearer_i}', mm_bearer_interface)
-        self.props['Bearers'].value.append(f'/org/freedesktop/ModemManager/Bearer/{bearer_i}')
-        self.bearers[f'/org/freedesktop/ModemManager/Bearer/{bearer_i}'] = mm_bearer_interface
+        bearer_path = f'/org/freedesktop/ModemManager/Bearer/{bearer_i}'
+        self.bus.export(bearer_path, mm_bearer_interface)
+        self.props['Bearers'].value.append(bearer_path)
+        self.bearers[bearer_path] = mm_bearer_interface
         self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
         bearer_i += 1
 
-        return f'/org/freedesktop/ModemManager/Bearer/{bearer_i}'
+        return bearer_path
 
     @method()
     async def DeleteBearer(self, path: 'o'):
