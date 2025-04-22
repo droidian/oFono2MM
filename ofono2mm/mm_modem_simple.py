@@ -3,6 +3,9 @@ from dbus_next.constants import PropertyAccess
 from dbus_next import Variant
 
 from ofono2mm.mm_types import ModemManagerState, ModemManagerAccessTechnology
+from ofono2mm.logger import Logger
+
+import asyncio
 
 class MMModemSimpleInterface(ServiceInterface):
     def __init__(self, mm_modem, ofono_interfaces, ofono_interface_props):
@@ -98,33 +101,38 @@ class MMModemSimpleInterface(ServiceInterface):
         except Exception as e:
             pass
 
-        for b in self.mm_modem.bearers:
-            if self.mm_modem.bearers[b].props['Properties'].value['apn'] == properties['apn']:
-                await self.mm_modem.bearers[b].add_auth_ofono(properties['username'].value if 'username' in properties else '',
-                                                                properties['password'].value if 'password' in properties else '')
-                self.mm_modem.bearers[b].props['Properties'] = Variant('a{sv}', properties)
-                await self.mm_modem.bearers[b].doConnect()
-                return b
-
         try:
-            bearer = await self.mm_modem.doCreateBearer(properties)
-            await self.mm_modem.bearers[bearer].doConnect()
-        except Exception as e:
-            bearer = f'/org/freedesktop/ModemManager/Bearer/0'
+            path = self.mm_modem.get_bearer_path_for_apn(properties['apn'].value)
+            if path is None:
+                path = await self.mm_modem.doCreateBearer(properties)
 
-        return bearer
+            bearer = self.mm_modem.bearers[path]
+            bearer.update_properties(properties)
+
+            # From ModemManager documentation:
+            # this call may wait for network registration
+            while self.mm_modem.props['State'].value < ModemManagerState.REGISTERED:
+                await asyncio.sleep(1)
+
+            Logger.info('Using bearer %s for %s', path, properties['apn'].value)
+            await bearer.doConnect()
+        except Exception as e:
+            Logger.error("Error while connecting bearer: %s", e)
+
+        return path
 
     @method()
     async def Disconnect(self, path: 'o'):
         if path == '/':
-            for b in self.mm_modem.bearers:
+            for b in list(self.mm_modem.bearers):
                 try:
                     await self.mm_modem.bearers[b].doDisconnect()
                 except Exception as e:
                     pass
-        if path in self.mm_modem.bearers:
+        else :
             try:
-                await self.mm_modem.bearers[path].doDisconnect()
+                if self.mm_modem.bearers[path].props['Connected'].value:
+                   await self.mm_modem.bearers[path].doDisconnect()
             except Exception as e:
                 pass
 
