@@ -3,15 +3,17 @@ from dbus_next.service import (ServiceInterface,
 from dbus_next.constants import PropertyAccess
 from dbus_next import Variant, DBusError, BusType
 
-from ofono2mm.mm_types import ModemManagerPortType
+from ofono2mm.mm_types import ModemManagerPortType, ModemManagerState
 from ofono2mm.utils import async_retryable
+from ofono2mm.logger import Logger
 
 import asyncio
+from time import time
 
 class MMBearerInterface(ServiceInterface):
     def __init__(self, index, bus, ofono_client, modem_name, ofono_modem, ofono_props, ofono_interfaces, ofono_interface_props, mm_modem):
         super().__init__('org.freedesktop.ModemManager1.Bearer')
-        # print(f"Creating new bearer interface for {index}")
+        Logger.info(f"Creating new bearer interface for {index}")
         self.index = index
         self.bus = bus
         self.ofono_client = ofono_client
@@ -21,9 +23,10 @@ class MMBearerInterface(ServiceInterface):
         self.ofono_props = ofono_props
         self.ofono_interfaces = ofono_interfaces
         self.ofono_interface_props = ofono_interface_props
+        self.ofono_ctx = None
         self.mm_modem = mm_modem
-        self.disconnecting = False
-        self.reconnect_task = None
+        self.connect_timestamp = 0
+        self.props_synced = False
         self.props = {
             "Interface": Variant('s', ''),
             "Connected": Variant('b', False),
@@ -118,10 +121,6 @@ class MMBearerInterface(ServiceInterface):
                         chosen_password = password
                         chosen_ctx_path = ctx[0]
 
-            self.props['Properties'].value['apn'] = Variant('s', chosen_apn if chosen_apn != '' else '')
-            self.props['Properties'].value['user'] = Variant('s', chosen_username if chosen_username != '' else '')
-            self.props['Properties'].value['password'] = Variant('s', chosen_password if chosen_password != '' else '')
-
             if chosen_auth_method == 'none':
                 self.props['Properties'].value['allowed-auth'] = Variant('u', 1) # none MM_BEARER_ALLOWED_AUTH_NONE
             elif chosen_auth_method == 'pap':
@@ -144,51 +143,103 @@ class MMBearerInterface(ServiceInterface):
                 elif roaming_allowed == False:
                     self.props['Properties'].value['roaming-allowance'] = Variant('u', 0) # roaming none MM_BEARER_ROAMING_ALLOWANCE_NONE
 
+    def update_properties(self, properties):
+        old_properties = self.props['Properties'].value
+        old_user = old_properties['user'].value if 'user' in old_properties else ''
+        old_password = old_properties['password'].value if 'password' in old_properties else ''
+        user = properties['user'].value if 'user' in properties else ''
+        password = properties['password'].value if 'password' in properties else ''
+
+        if self.props_synced:
+            self.props_synced = properties['apn'] == old_properties['apn'] and \
+                                old_user == user and old_password == password
+
+        self.props['Properties'].value = Variant('a{sv}', properties)
+
+    def set_context(self, ofono_ctx):
+        self.ofono_ctx = ofono_ctx
+        ofono_ctx_interface = self.ofono_client['ofono_context'][ofono_ctx]['org.ofono.ConnectionContext']
+        ofono_ctx_interface.on_property_changed(self.ofono_context_changed)
+
+    async def update_context(self):
+        if 'org.ofono.ConnectionManager' not in self.ofono_interfaces:
+            return
+        properties = self.props['Properties'].value
+        ofono_ctx_interface = self.ofono_client['ofono_context'][self.ofono_ctx]['org.ofono.ConnectionContext']
+        try:
+            await ofono_ctx_interface.call_set_property('Active', Variant('b', False))
+        except Exception as e:
+            Logger.warning("Can't disable ofono context: %s", e)
+
+        try:
+            if 'apn' in properties:
+                await ofono_ctx_interface.call_set_property("Name", properties['apn'])
+                await ofono_ctx_interface.call_set_property("AccessPointName", properties['apn'])
+            await ofono_ctx_interface.call_set_property("Protocol", Variant('s', 'ip'))
+            await self.add_auth_ofono(properties['user'].value if 'user' in properties else '',
+                                      properties['password'].value if 'password' in properties else '')
+            self.props_synced = True
+        except Exception as e:
+            Logger.error("Can't update ofono context: %s", e)
+
+    async def wait_for_connect(self, timestamp):
+        while not self.props['Connected'].value and \
+                self.mm_modem.props['State'].value >= ModemManagerState.REGISTERED and \
+                self.connect_timestamp == timestamp:
+            await asyncio.sleep(1)
+
     @method()
     async def Connect(self):
-        await self.doConnect()
+        try:
+            await self.doConnect()
+        except Exception as e:
+            Logger.error("Error while connecting bearer: %s", e)
 
     @async_retryable()
     async def doConnect(self):
+        self.connect_timestamp = time()
+
         try:
             await self.set_props()
         except Exception as e:
             pass
 
-        # print("Do connect")
-        ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
-        await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
+        if not self.props_synced:
+            await self.update_context()
 
-        # Clear the reconnection task
-        self.reconnect_task = None
+        if self.props['Connected'].value:
+            return
+
+        timestamp = self.connect_timestamp
+        while self.connect_timestamp == timestamp:
+            ofono_ctx_interface = self.ofono_client['ofono_context'][self.ofono_ctx]['org.ofono.ConnectionContext']
+            try:
+                await ofono_ctx_interface.call_set_property("Active", Variant('b', True))
+                await self.wait_for_connect(timestamp)
+                break
+            except Exception as e:
+                Logger.warning("Connection failed: %s", e)
+                if self.mm_modem.props['State'].value < ModemManagerState.REGISTERED:
+                    break
+                if str(e) == 'Operation already in progress':
+                    await self.wait_for_connect(timestamp)
+                    break
+                await ofono_ctx_interface.call_set_property("Active", Variant('b', False))
+                await asyncio.sleep(10)
 
     @method()
     async def Disconnect(self):
         await self.doDisconnect()
 
-    async def cancel_reconnect_task(self):
-        if self.reconnect_task is not None:
-            self.reconnect_task.cancel()
-            try:
-                await self.reconnect_task
-            except asyncio.CancelledError:
-                # Finally
-                pass
-            finally:
-                self.reconnect_task = None
-
     async def doDisconnect(self):
-        self.disconnecting = True
-
-        # Cancel an eventual reconnection task
-        await self.cancel_reconnect_task()
+        self.connect_timestamp = time()
 
         ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         await ofono_ctx_interface.call_set_property("Active", Variant('b', False))
 
     async def add_auth_ofono(self, username, password):
-        ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
         try:
+            ofono_ctx_interface = self.ofono_client["ofono_context"][self.ofono_ctx]['org.ofono.ConnectionContext']
             await ofono_ctx_interface.call_set_property("Username", Variant('s', username))
             await ofono_ctx_interface.call_set_property("Password", Variant('s', password))
         except Exception as e:
@@ -196,13 +247,9 @@ class MMBearerInterface(ServiceInterface):
 
     def ofono_context_changed(self, propname, value):
         if propname == "Active":
-            if self.disconnecting and (not value.value):
-                self.disconnecting = False
-            elif not self.disconnecting and (not value.value) and self.reconnect_task is None and self.props['Connected'].value:
-                self.reconnect_task = asyncio.create_task(self.doConnect())
-
             self.props['Connected'] = value
             self.emit_properties_changed({'Connected': value.value})
+            self.mm_modem.set_props()
         elif propname == "Settings":
             if 'Interface' in value.value:
                 self.props['Interface'] = value.value['Interface']
