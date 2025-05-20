@@ -35,6 +35,7 @@ class MMModemMessagingInterface(ServiceInterface):
     async def init_messages(self):
         if 'org.ofono.MessageManager' in self.ofono_interfaces:
             self.ofono_interfaces['org.ofono.MessageManager'].on_incoming_message(self.add_incoming_message)
+            self.ofono_interfaces['org.ofono.MessageManager'].on_immediate_message(self.add_incoming_message)
 
     def add_incoming_message(self, msg, props):
         global message_i
