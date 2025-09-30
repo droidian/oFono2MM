@@ -35,6 +35,7 @@ class MMModemMessagingInterface(ServiceInterface):
     async def init_messages(self):
         if 'org.ofono.MessageManager' in self.ofono_interfaces:
             self.ofono_interfaces['org.ofono.MessageManager'].on_incoming_message(self.add_incoming_message)
+            self.ofono_interfaces['org.ofono.MessageManager'].on_immediate_message(self.add_incoming_message)
 
     def add_incoming_message(self, msg, props):
         global message_i
@@ -78,17 +79,17 @@ class MMModemMessagingInterface(ServiceInterface):
             'DeliveryReportRequest': properties['delivery-report-request'] if 'delivery-report-request' in properties else Variant('b', False)
         })
 
-        self.bus.export(f'/org/freedesktop/ModemManager1/SMS/{message_i}', mm_sms_interface)
-        self.props['Messages'].value.append(f'/org/freedesktop/ModemManager1/SMS/{message_i}')
+        bus_path = f'/org/freedesktop/ModemManager1/SMS/{message_i}'
+        self.bus.export(bus_path, mm_sms_interface)
+        self.props['Messages'].value.append(bus_path)
         self.emit_properties_changed({'Messages': self.props['Messages'].value})
-        self.Added(f'/org/freedesktop/ModemManager1/SMS/{message_i}', True)
-        message_i_old = message_i
+        self.Added(bus_path, True)
         message_i += 1
 
         if 'org.ofono.MessageManager' in self.ofono_interfaces:
             ofono_sms_path = await self.ofono_interfaces['org.ofono.MessageManager'].call_send_message(properties['number'].value, properties['text'].value)
 
-        return f'/org/freedesktop/ModemManager1/SMS/{message_i_old}'
+        return bus_path
 
     @signal()
     def Added(self, path, received) -> 'ob':
