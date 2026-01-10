@@ -55,11 +55,11 @@ class MMModemInterface(ServiceInterface):
         self.mm_modem3gpp_interface = None
         self.mm_modem_messaging_interface = None
         self.mm_sim_interface = None
-        self.sim = Variant('o', f'/org/freedesktop/ModemManager/SIM/{self.index}')
+        self.sim = Variant('o', f'/org/freedesktop/ModemManager1/SIM/{self.index}')
         self.bearers = {}
         self.props = {
             'Sim': Variant('o', '/'),
-            'SimSlots': Variant('ao', [f'/org/freedesktop/ModemManager/SIM/{self.index}']),
+            'SimSlots': Variant('ao', [f'/org/freedesktop/ModemManager1/SIM/{self.index}']),
             'PrimarySimSlot': Variant('u', 0),
             'Bearers': Variant('ao', []),
             'SupportedCapabilities': Variant('au', [ModemManagerCapability.NONE]),
@@ -158,7 +158,7 @@ class MMModemInterface(ServiceInterface):
 
     async def init_mm_sim_interface(self):
         self.mm_sim_interface = MMSimInterface(self.index, self.bus, self.ofono_client, self.modem_name, self.ofono_modem, self.ofono_props, self.ofono_interfaces, self.ofono_interface_props)
-        self.bus.export(f'/org/freedesktop/ModemManager/SIM/{self.index}', self.mm_sim_interface)
+        self.bus.export(f'/org/freedesktop/ModemManager1/SIM/{self.index}', self.mm_sim_interface)
         self.mm_sim_interface.set_props()
         await self.check_ofono_contexts()
 
@@ -284,9 +284,9 @@ class MMModemInterface(ServiceInterface):
                 ofono_ctx_interface = self.ofono_client["ofono_context"][ctx[0]]["org.ofono.ConnectionContext"]
                 ofono_ctx_interface.on_property_changed(self.ofono_context_changed)
                 mm_bearer_interface.set_context(ctx[0])
-                self.bus.export(f'/org/freedesktop/ModemManager/Bearer/{bearer_i}', mm_bearer_interface)
-                self.props['Bearers'].value.append(f'/org/freedesktop/ModemManager/Bearer/{bearer_i}')
-                self.bearers[f'/org/freedesktop/ModemManager/Bearer/{bearer_i}'] = mm_bearer_interface
+                self.bus.export(f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}', mm_bearer_interface)
+                self.props['Bearers'].value.append(f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}')
+                self.bearers[f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}'] = mm_bearer_interface
                 bearer_i += 1
 
         if self.props['Bearers'].value == old_bearer_list:
@@ -340,9 +340,9 @@ class MMModemInterface(ServiceInterface):
             ofono_ctx_interface = self.ofono_client["ofono_context"][path]['org.ofono.ConnectionContext']
             ofono_ctx_interface.on_property_changed(self.ofono_context_changed)
             mm_bearer_interface.set_context(path)
-            self.bus.export(f'/org/freedesktop/ModemManager/Bearer/{bearer_i}', mm_bearer_interface)
-            self.props['Bearers'].value.append(f'/org/freedesktop/ModemManager/Bearer/{bearer_i}')
-            self.bearers[f'/org/freedesktop/ModemManager/Bearer/{bearer_i}'] = mm_bearer_interface
+            self.bus.export(f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}', mm_bearer_interface)
+            self.props['Bearers'].value.append(f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}')
+            self.bearers[f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}'] = mm_bearer_interface
             bearer_i += 1
             self.emit_properties_changed({'Bearers': self.props['Bearers'].value})
 
@@ -599,7 +599,7 @@ class MMModemInterface(ServiceInterface):
 
         await self.set_bearer_context(mm_bearer_interface)
 
-        bearer_path = f'/org/freedesktop/ModemManager/Bearer/{bearer_i}'
+        bearer_path = f'/org/freedesktop/ModemManager1/Bearer/{bearer_i}'
         self.bus.export(bearer_path, mm_bearer_interface)
         self.props['Bearers'].value.append(bearer_path)
         self.bearers[bearer_path] = mm_bearer_interface
